@@ -1,0 +1,32 @@
+# Symlinks to Amazon-internal workspace skills (not portable, not for sharing)
+cr-review
+create-amazon-internal-sims
+design-doc
+humanize-tone
+publish-cr
+rca
+research
+ticket-ops
+
+# Local settings (may contain machine-specific paths)
+.claude/
+
+# OS / editor cruft
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Logs / temp
+*.log
+*.tmp
