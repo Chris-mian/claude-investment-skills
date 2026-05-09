@@ -27,6 +27,7 @@ If the utterance is in a language other than EN/CN, mentally translate to the ca
 
 | Intent (canonical EN) | Bilingual triggers | Tool |
 |---|---|---|
+| **Daily macro warning / pullback radar** | EN: "macro warning / regime check / is the market at peak / should I take profits" · CN: "宏观警报 / 市场是不是顶了 / 该不该减仓 / regime 怎么样" | **`macro-warning` skill (batch-friendly)** |
 | Check insider activity for stock(s) | EN: "insider check / insider trading on X / who's buying X" · CN: "X 内部交易 / X 高管买卖 / X insider 怎么样" | `insider_ratio.py` |
 | Hunt market-wide cluster buys | EN: "find cluster buys / who are insiders buying / where's smart money" · CN: "找 cluster buy / 内部人在买什么 / 最近高管买入" | `cluster_buy_scan.py` |
 | Live quotes + moving averages | EN: "quote X / price of X / where is X trading" · CN: "X 现在多少 / X 报价 / X 价格" | `quote_pull.py` |
@@ -241,6 +242,69 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ```bash
 uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/max_pain.py TICKER [n_expiries]
 ```
+
+---
+
+## Skill: `macro-warning` — daily 8-layer pullback radar
+
+### Triggers (natural language)
+
+**English**: "macro warning", "macro check", "regime check", "is the market at peak", "should I take profits", "is it time to buy", "pullback risk", "market top", "daily macro radar"
+
+**Chinese**: "宏观警报", "宏观检查", "regime 怎么样", "市场是不是顶了", "该不该减仓", "现在能不能加仓", "市场风险大不大", "顶部信号"
+
+### Canonical invocation
+
+This is a **skill**, not a CLI script. Invoke via:
+- Slash command: `/macro-warning`
+- Or instruct agent: "Run the macro-warning skill"
+- Or via `/schedule` for batch
+
+### What it does
+
+8-layer composite scoring (0-16) with output regime tag:
+1. Valuation (NDX P/E >38, SPX P/E, Shiller CAPE, Buffett Indicator)
+2. Volatility (VIX, MOVE, VVIX, VIX/VVIX ratio)
+3. Sentiment (CNN F&G, AAII, NAAIM, P/C ratio)
+4. Credit (HY OAS, IG OAS, yield curve, 30Y)
+5. Currency (DXY, USD/JPY, BOJ pricing)
+6. Breadth (% above 200DMA, A/D, new highs/lows, McClellan)
+7. CTA / vol-target positioning
+8. Sector rotation tilt (XLU/XLK, defensive vs cyclical)
+
+Override rules: NDX P/E >38 OR VIX <14 OR F&G >85 = automatic YELLOW minimum.
+
+### Output
+
+Single regime tag (🟢 GREEN / 🟡 YELLOW / 🟠 ORANGE / 🔴 RED) + 8-layer breakdown table + delta-vs-yesterday + specific position-sizing actions + sector tilt + catalyst watch.
+
+### Recommended scheduling
+
+Pre-market alert (8am ET, weekdays):
+```bash
+# Via /schedule skill
+cron: "0 12 * * 1-5"   # 8am ET = 12 UTC
+prompt: "Run macro-warning skill. If regime flipped or NDX PE crossed 38, emphasize the change."
+```
+
+Post-close summary (5pm ET, weekdays):
+```bash
+cron: "0 21 * * 1-5"
+```
+
+### Common patterns
+
+| User says | → Action |
+|---|---|
+| "Run macro warning" | Execute full 8-layer scan, output report |
+| "Is the market at top?" | Same as above, lead with valuation + sentiment layers |
+| "Should I add now?" | Same, but lead with action items (add/hold/trim) |
+| "宏观警报" | Same, output in Chinese |
+| "Set up daily macro alert" | Use /schedule to create the cron above |
+
+### Memory integration
+
+After each run, the skill writes to `~/.claude/projects/-Volumes-workplace-invest/memory/macro_history.jsonl` with date + regime + key indicators. This lets future runs compute deltas ("VIX rising 3 days in a row", "NDX PE crossed 38 today").
 
 ---
 

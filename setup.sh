@@ -142,6 +142,7 @@ SKILLS_DIR="$HOME/.claude/skills"
 REQUIRED_SKILLS=(
     "analyze-stock"
     "macro-risk-check"
+    "macro-warning"
     "earnings-prep"
     "leaps-screen"
     "option-wall-analysis"

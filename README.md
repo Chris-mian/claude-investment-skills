@@ -40,7 +40,8 @@ bash ~/.claude/skills/setup.sh
 | Skill | Purpose | Trigger Keywords |
 |-------|---------|-----------------|
 | `analyze-stock` | 10-step deep dive on any stock | "analyze X", "is X a buy", "deep dive" |
-| `macro-risk-check` | Daily macro radar (VIX/MOVE/yields/USDJPY) | "macro check", "regime read" |
+| `macro-risk-check` | Daily macro radar (VIX/MOVE/yields/USDJPY) — news-driven | "macro check", "regime read" |
+| **`macro-warning`** | **Daily batch-mode 8-layer pullback radar** (NDX PE / VIX / F&G / credit / breadth / sectors) — quantitative | **"macro warning", "is the market at peak", "宏观警报"** |
 | `find-untapped-thesis` | NOK-style screening (未爆发) | "find next NOK", "undervalued in X" |
 | `earnings-prep` | Pre-earnings decision framework | "should I hold X through earnings" |
 | `leaps-screen` | LEAPS selection (1-3yr options) | "what LEAPS for X", "stock or LEAPS" |

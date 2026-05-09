@@ -33,7 +33,8 @@ User question → Which skill?
    → option-wall-analysis
 
 "Macro looks shaky / regime check"
-   → macro-risk-check
+   → macro-risk-check (news-driven)
+   → macro-warning (quantitative, batch-friendly, 8-layer)
 
 "Should I sell X now or wait for tax?"
    → tax-optimize
@@ -211,6 +212,7 @@ Different sub-sectors have fundamentally different growth dynamics. Always ident
 
 | Frequency | Skill | When |
 |---|---|---|
+| **Daily 8am ET（pre-market）** | **`macro-warning`** | **Pullback / 顶部风险扫描（NDX PE / VIX / F&G / 8 layer）** |
 | Weekly Monday 8am ET | `macro-risk-check` | Pre-market regime read |
 | Weekly Friday 4pm ET | `find-untapped-thesis` | Find next ideas |
 | Monthly 1st | `review-investment-screenshot` | Full portfolio audit |
