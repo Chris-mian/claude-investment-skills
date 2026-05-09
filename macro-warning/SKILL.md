@@ -165,21 +165,69 @@ Score each layer 0 (worst), 1 (caution), 2 (good). Sum gives composite:
 6. **Cite sources** — every threshold has a verifiable URL. No fabricated numbers.
 7. **For batch run, pre-fetch all data in parallel** to keep total runtime <60s.
 
-## Tool cheat-sheet
+## ⭐ Canonical data pull: `scripts/macro_pull.py`
 
-| Need | Tool |
-|---|---|
-| NDX Forward P/E | `mcp__yfmcp__yfinance_get_ticker_info` on QQQ → `forwardPE` field; cross-verify with WebSearch on macromicro.me/series/23955 or gurufocus.com/economic_indicators/6778 |
-| VIX / MOVE / VVIX | `mcp__yfmcp__yfinance_get_ticker_info` on `^VIX`, `^MOVE`, `^VVIX` |
-| CNN Fear & Greed | WebFetch `https://www.cnn.com/markets/fear-and-greed` (numeric value + components) |
-| AAII Sentiment | WebSearch "AAII sentiment survey [current week]" |
-| HY OAS spread | WebFetch `https://fred.stlouisfed.org/series/BAMLH0A0HYM2` |
-| Yield curve | yfmcp `^TNX` (10Y) and `^TYX` (30Y); 2Y via WebSearch |
-| DXY | yfmcp `DX-Y.NYB` |
-| USD/JPY | yfmcp `JPY=X` |
-| % above 200DMA | WebSearch "S&P 500 percent stocks above 200-day moving average current" |
-| CTA positioning | WebSearch "Goldman CTA flows this week" |
-| Sector ETFs | yfmcp on XLK, XLY, XLU, XLP, XLF, XLE, XLV, XLI, XLB, XLRE, XLC |
+**Use this script for all batch runs.** It hits direct APIs (no WebSearch, no LLM scraping) and returns a single JSON blob with raw values + deterministic 8-layer scoring.
+
+```bash
+# Full scan (~30s, includes breadth computation)
+/tmp/.insider_venv/bin/python ~/.claude/skills/macro-warning/scripts/macro_pull.py
+
+# Fast scan (~5s, skip breadth)
+/tmp/.insider_venv/bin/python ~/.claude/skills/macro-warning/scripts/macro_pull.py --skip-breadth
+
+# Pipe to jq for inspection
+... macro_pull.py | jq '.scoring'
+```
+
+**Why direct APIs not WebSearch:**
+- Reproducible (same input → same output)
+- Batch-safe (no rate limit, no LLM token cost)
+- Auditable (every value has a known source)
+- WebSearch returns stale/summarized data — actual API gives the live number
+
+### Data sources used by the script
+
+| Layer | Indicator | Source | API type |
+|---|---|---|---|
+| Valuation | Shiller CAPE, SPX trailing PE, Div Yield | `multpl.com/{slug}` | HTML meta tag scrape |
+| Volatility | VIX, MOVE, VVIX | yfinance `^VIX`, `^MOVE`, `^VVIX` | Python lib |
+| Sentiment | CNN F&G + 1w/1m/1y history | `production.dataviz.cnn.io/index/fearandgreed/graphdata` | Unofficial JSON (browser headers) |
+| Credit | HY/IG OAS, DGS10/30/2, T10Y2Y | `fred.stlouisfed.org/graph/fredgraph.csv?id=...` | Public CSV (no API key, default UA only — Chrome UA gets blocked) |
+| Currency | DXY, USD/JPY | yfinance `DX-Y.NYB`, `JPY=X` | Python lib |
+| Breadth | % SPX top 50 above 200DMA (proxy) | yfinance batch on top 50 SPX names | Computed |
+| Sector | XLK, XLU, XLP, XLY, XLE, XLF, SMH, RSP, IWM | yfinance | Python lib |
+| **CTA flow** | — | **No public API; check Goldman PB report manually** | — |
+| **AAII** | — | **No public API; check aaii.com/sentimentsurvey weekly** | — |
+
+### Output schema
+
+```json
+{
+  "timestamp_utc": "2026-05-08T...",
+  "yf":      {SPY, QQQ, VIX, MOVE, VVIX, ^TNX, ^TYX, DXY, JPY, ETFs...},
+  "fred":    {HY_OAS, IG_OAS, DGS10, DGS30, T10Y2Y, DGS2},
+  "cnn":     {score, rating, prev_close, prev_1_week, prev_1_month, prev_1_year},
+  "multpl":  {shiller_pe, spx_trailing_pe, spx_dividend_yield},
+  "breadth": {above, total, pct_above_200dma_top50, missing_tickers},
+  "scoring": {
+    "layers": {valuation, volatility, sentiment, credit, currency, breadth, cta_flow, sector_rotation},
+    "composite": 0-16,
+    "regime": "🟢 GREEN | 🟡 YELLOW | 🟠 ORANGE | 🔴 RED",
+    "triggers": ["Shiller CAPE 42.05 > 38 (extreme)", "VIX 17.19 < 18 (exit-signal threshold)", ...]
+  }
+}
+```
+
+### Fallback / gaps the script does NOT cover
+
+| What | Why | Manual fallback |
+|---|---|---|
+| NDX Forward PE | yfinance returns `null` for ETF index; macromicro/gurufocus need login | yfmcp QQQ.info or quarterly recheck |
+| AAII bullish % | aaii.com no API | Check aaii.com Thursday updates |
+| Goldman CTA $ flow | proprietary | Check JPM/GS week-ahead reports |
+| Buffett Indicator | multpl.com page returns 404 | Use currentmarketvaluation.com |
+| Full $S5TH (all SPX) | Index restricted to data vendors | Top-50 proxy is biased toward mega-cap (intentional, captures Mag-7 risk) |
 
 ## Example execution for batch agent
 
