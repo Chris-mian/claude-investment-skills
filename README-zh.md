@@ -40,7 +40,8 @@ bash ~/.claude/skills/setup.sh
 | Skill | 用途 | 触发关键词 |
 |-------|------|----------|
 | `analyze-stock` | 10 步深度分析任何股票 | "analyze X"、"X 是不是 buy"、"深度分析" |
-| `macro-risk-check` | 每日宏观风险扫描 | "宏观看一下"、"市场状态" |
+| `macro-risk-check` | 每日宏观新闻扫描 | "宏观看一下"、"市场状态" |
+| **`macro-warning`** | **每日 batch 8-层顶部预警**（NDX P/E / VIX / F&G / 信用 / 宽度 / 板块）| **"宏观警报"、"市场是不是顶了"、"该不该减仓"** |
 | `find-untapped-thesis` | NOK 类未爆发筛选 | "找下一个 NOK"、"X 板块未爆发" |
 | `earnings-prep` | 财报前决策框架 | "X 财报怎么处理"、"该持有还是减仓" |
 | `leaps-screen` | LEAPS 长期期权选择 | "X 买什么 LEAPS"、"现货还是 LEAPS" |
@@ -169,6 +170,124 @@ Top-Down 宏观感知投资框架，5 大核心原则：
 
 ---
 
+## 📝 触发示例（English + 中文）
+
+每个 skill 都可以**用大白话**触发——不需要打 slash 命令。说什么都行，中英文随便切。
+
+### 🆕 macro-warning（每日顶部预警）
+
+**英文：**
+- "Run macro warning"
+- "Is the market at peak?"
+- "Should I take profits?"
+- "Regime check"
+
+**中文：**
+- "宏观警报"
+- "市场是不是顶了"
+- "现在该不该减仓"
+- "regime 怎么样"
+- "今天能不能加仓"
+
+**设为定时任务：**
+- "每天早上 8 点跑 macro-warning"
+- "Set up daily macro-warning at 8am ET pre-market"
+
+---
+
+### 📊 analyze-stock（10 步深度分析）
+
+**英文：** "Analyze NVDA"、"Is TSEM a buy?"、"Deep dive on FN"
+**中文：** "分析一下 NVDA"、"TSEM 怎么样"、"FN 能买吗"、"深度看一下 GFS"
+
+---
+
+### 🔍 find-untapped-thesis（NOK 风格筛选）
+
+**英文：** "Find me the next NOK"、"What's undervalued in AI Power"
+**中文：** "找未爆发的 AI 电力股"、"光通信板块还有什么便宜的"、"找下一个 NOK"
+
+---
+
+### 🎯 find-alpha（3 时间维度 alpha）
+
+**英文：** "Find alpha"、"Weekly alpha scan"、"What's the next MRVL setup?"
+**中文：** "找 alpha"、"本周 alpha 扫一下"、"找下一个 MRVL"
+
+---
+
+### 📈 macro-risk-check（新闻型宏观）
+
+**英文：** "Macro check"、"Is the market safe?"
+**中文：** "看一下宏观"、"市场风险怎么样"、"现在能加仓吗"
+
+---
+
+### 💰 earnings-prep（财报前决策）
+
+**英文：** "Earnings prep for AMD"、"Should I hold NVDA through earnings?"
+**中文：** "AMD 财报前怎么看"、"NVDA 财报应该减仓吗"、"X 财报前分析"
+
+---
+
+### 📞 leaps-screen（长期期权）
+
+**英文：** "LEAPS for NVDA"、"What call should I buy on TSEM?"
+**中文：** "NVDA 买什么 LEAPS"、"TSEM 的长期 call"、"VST 现货还是期权"
+
+---
+
+### 🧱 option-wall-analysis（最大痛点+期权墙）
+
+**英文：** "Max pain on NVDA"、"Option walls for AAPL"
+**中文：** "NVDA 的 max pain"、"AAPL 期权墙"、"SPY 这周走哪里"
+
+---
+
+### 💼 portfolio-audit（组合风险审计）
+
+**英文：** "Review my portfolio"、"Audit my book"、"Am I too concentrated?"
+**中文：** "审一下我的组合"、"我组合风险大吗"、"该减什么仓"
+
+---
+
+### 🧾 tax-optimize（税务优化）
+
+**英文：** "Should I sell NOK for tax?"、"LTCG vs STCG on NVDA"
+**中文：** "X 减仓税务"、"现在卖还是等长期"、"X 减仓最省税"
+
+---
+
+### 🔄 sector-rotation-analysis（板块轮动）
+
+**英文：** "Sector rotation"、"What sector to add?"
+**中文：** "板块轮动"、"该买哪个板块"、"我是不是 tech 太重"
+
+---
+
+### 🪞 narrative-reversal-screen（暴跌反转）
+
+**英文：** "Find beaten-down stocks with thesis"、"Comeback candidates"
+**中文：** "找暴跌反转股"、"ORCL 那种反转"、"已经跌透的好股"
+
+---
+
+### 📸 review-investment-screenshot（截图速读）
+
+直接发组合截图 + "看一下我的组合" 或 "what do you think?"
+
+---
+
+### 🔧 内部人脚本（高级功能）
+
+**全市场 cluster buy 扫描：**
+- "Find cluster buys" / "找 cluster buy" / "最近高管买入"
+
+**单股内部人查询：**
+- "Insider check on NVDA" / "TSEM 内部交易" / "X 高管在卖吗"
+
+---
+
 ## 🚀 常用工作流
 
 ### 工作流 1：「该不该买 NVDA？」
@@ -205,15 +324,17 @@ Top-Down 宏观感知投资框架，5 大核心原则：
 
 ## 📅 推荐定时任务
 
-通过 `/schedule` skill 设置：
+通过 `/schedule` skill 设置（直接说"每天早上 8 点跑 macro-warning"或 "set up daily macro warning at 8am ET"）：
 
-| 频率 | Skill | 何时 |
-|------|-------|------|
-| 每周一早 8 点 ET | `macro-risk-check` | 盘前 regime 读取 |
-| 每周五下午 4 点 ET | `find-untapped-thesis` | 找下周想法 |
-| 每月 1 日 | `portfolio-audit` | 完整组合审计 |
-| 重大事件前 24h | `macro-risk-check` | Fed/BOJ/重大财报前 |
-| 季度 | `tax-optimize` | 年末规划 |
+| 频率 | Skill | 何时 | Cron (UTC) |
+|------|-------|------|------------|
+| **每个交易日早 8 点 ET** | **`macro-warning`** | **盘前 8-层顶部预警** | **`0 12 * * 1-5`** |
+| 每个交易日下午 5 点 ET（可选） | `macro-warning` | 收盘后总结 | `0 21 * * 1-5` |
+| 每周一早 8 点 ET | `macro-risk-check` | 新闻型 regime 读取 | `0 12 * * 1` |
+| 每周五下午 4 点 ET | `find-untapped-thesis` | 找下周想法 | `0 20 * * 5` |
+| 每月 1 日 | `portfolio-audit` | 完整组合审计 | `0 12 1 * *` |
+| 重大事件前 24h | `macro-risk-check` | Fed/BOJ/重大财报前 | 手动 |
+| 季度 | `tax-optimize` | 年末规划 | 手动 |
 
 ---
 

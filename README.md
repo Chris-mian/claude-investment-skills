@@ -129,8 +129,11 @@ ls ~/.claude/skills/
 ├── README.md                           # This file (English)
 ├── README-zh.md                        # Chinese version
 │
+├── AGENT-TOOL-REFERENCE.md             # NEW v1.2: natural-language → CLI for agents/CLI
+│
 ├── analyze-stock/SKILL.md              # 10-step master framework
-├── macro-risk-check/SKILL.md           # Daily macro radar
+├── macro-risk-check/SKILL.md           # Daily macro radar (news-driven)
+├── macro-warning/SKILL.md              # NEW v1.3: daily 8-layer pullback radar (batch)
 ├── find-untapped-thesis/SKILL.md       # NOK-style screening
 ├── earnings-prep/SKILL.md              # Pre-earnings analysis
 ├── leaps-screen/SKILL.md               # LEAPS selection
@@ -170,6 +173,222 @@ Combined with discipline rules:
 
 ---
 
+## 📝 Examples — What to Say (English + 中文)
+
+Every skill triggers via natural language in **either English or Chinese**. Just say it like a human — no slash commands needed (though slash works too).
+
+### 🆕 macro-warning (daily pullback radar)
+
+**English triggers:**
+- "Run macro warning"
+- "Is the market at peak?"
+- "Should I take profits?"
+- "Regime check"
+- "Is it time to buy?"
+- "What's the pullback risk today?"
+
+**中文 triggers:**
+- "宏观警报"
+- "市场是不是顶了"
+- "现在该不该减仓"
+- "regime 怎么样"
+- "今天能不能加仓"
+- "市场风险大不大"
+
+**Schedule it (daily auto-run):**
+- "Set up daily macro-warning at 8am ET pre-market" → triggers `/schedule`
+- "每天早上 8 点跑一次 macro-warning"
+
+---
+
+### 📊 analyze-stock (10-step deep dive)
+
+**English:**
+- "Analyze NVDA"
+- "Is TSEM a buy?"
+- "Deep dive on FN"
+- "What about CEG stock?"
+- "Research VST"
+
+**中文:**
+- "分析一下 NVDA"
+- "TSEM 怎么样"
+- "FN 能买吗"
+- "深度看一下 GFS"
+- "调研 VST"
+
+---
+
+### 🔍 find-untapped-thesis (NOK-style screening)
+
+**English:**
+- "Find me the next NOK"
+- "What's undervalued in AI Power"
+- "Show me cheap names in semiconductor"
+- "Find untapped uranium plays"
+
+**中文:**
+- "找未爆发的 AI 电力股"
+- "光通信板块还有什么便宜的"
+- "找下一个 NOK"
+- "X 主题筛选"
+
+---
+
+### 🎯 find-alpha (3-horizon discovery)
+
+**English:**
+- "Find alpha"
+- "Weekly alpha scan"
+- "What's the next MRVL setup?"
+- "Find me 3 swing trades"
+
+**中文:**
+- "找 alpha"
+- "本周 alpha 扫一下"
+- "找下一个 MRVL"
+
+---
+
+### 📈 macro-risk-check (news-driven macro)
+
+**English:**
+- "Macro check"
+- "Is the market safe?"
+- "Risk on or off?"
+
+**中文:**
+- "看一下宏观"
+- "市场风险怎么样"
+- "现在能加仓吗"
+
+---
+
+### 💰 earnings-prep (pre-earnings decision)
+
+**English:**
+- "Earnings prep for AMD"
+- "Should I hold NVDA through earnings?"
+- "What's priced in for CRWD earnings?"
+- "AMD reports tomorrow, what do I do?"
+
+**中文:**
+- "AMD 财报前怎么看"
+- "NVDA 财报应该减仓吗"
+- "CRWD 财报前分析"
+- "X implied move"
+
+---
+
+### 📞 leaps-screen (long-dated options)
+
+**English:**
+- "LEAPS for NVDA"
+- "What call should I buy on TSEM?"
+- "Stock or LEAPS for VST?"
+
+**中文:**
+- "NVDA 买什么 LEAPS"
+- "TSEM 的长期 call"
+- "VST 现货还是期权"
+- "FN 2027 call 推荐"
+
+---
+
+### 🧱 option-wall-analysis (max pain + gamma)
+
+**English:**
+- "Max pain on NVDA"
+- "Option walls for AAPL"
+- "Where will SPY pin this week?"
+
+**中文:**
+- "NVDA 的 max pain"
+- "AAPL 期权墙"
+- "SPY 这周走哪里"
+
+---
+
+### 💼 portfolio-audit (full risk audit)
+
+**English:**
+- "Review my portfolio"
+- "Audit my book"
+- "Am I too concentrated?"
+- "What should I trim?"
+
+**中文:**
+- "审一下我的组合"
+- "我组合风险大吗"
+- "该减什么仓"
+
+---
+
+### 🧾 tax-optimize (LTCG vs STCG)
+
+**English:**
+- "Should I sell NOK for tax?"
+- "Tax on selling AMD"
+- "LTCG vs STCG on NVDA"
+
+**中文:**
+- "X 减仓税务"
+- "现在卖还是等长期"
+- "X 减仓最省税"
+
+---
+
+### 🔄 sector-rotation-analysis
+
+**English:**
+- "Sector rotation"
+- "What sector to add?"
+- "Am I too tech-heavy?"
+
+**中文:**
+- "板块轮动"
+- "该买哪个板块"
+- "我是不是 tech 太重"
+
+---
+
+### 🪞 narrative-reversal-screen
+
+**English:**
+- "Find beaten-down stocks with thesis"
+- "Stocks at bottom that can recover"
+- "Comeback candidates"
+
+**中文:**
+- "找暴跌反转股"
+- "ORCL 那种反转"
+- "已经跌透的好股"
+
+---
+
+### 📸 review-investment-screenshot
+
+**English:** Just paste a portfolio screenshot and ask "what do you think?"
+
+**中文:** 直接发组合截图，问"看一下我的组合"
+
+---
+
+### 🔧 Insider scripts (technical, advanced)
+
+**Cluster buy hunt (market-wide):**
+- "Find cluster buys"
+- "Who's buying what?"
+- "找 cluster buy"
+- "最近高管买入"
+
+**Single-stock insider check:**
+- "Insider check on NVDA"
+- "TSEM 内部交易"
+- "X 高管在卖吗"
+
+---
+
 ## 🚀 Common Workflows
 
 ### Workflow 1: "Should I buy NVDA?"
@@ -206,15 +425,17 @@ Combined with discipline rules:
 
 ## 📅 Recommended Recurring Tasks
 
-Set up via `/schedule` skill:
+Set up via `/schedule` skill (just say "set up daily macro warning at 8am ET" / "每天早上 8 点跑 macro-warning"):
 
-| Frequency | Skill | When |
-|-----------|-------|------|
-| Weekly Monday 8am ET | `macro-risk-check` | Pre-market regime read |
-| Weekly Friday 4pm ET | `find-untapped-thesis` | Find next ideas |
-| Monthly 1st | `portfolio-audit` | Full portfolio audit |
-| Pre-event (24h) | `macro-risk-check` | Before Fed/BOJ/major earnings |
-| Quarterly | `tax-optimize` | Year-end planning |
+| Frequency | Skill | When | Cron (UTC) |
+|-----------|-------|------|------------|
+| **Daily 8am ET (weekdays)** | **`macro-warning`** | **Pre-market 8-layer pullback radar** | **`0 12 * * 1-5`** |
+| Daily 5pm ET (weekdays, optional) | `macro-warning` | Post-close summary | `0 21 * * 1-5` |
+| Weekly Monday 8am ET | `macro-risk-check` | News-driven regime read | `0 12 * * 1` |
+| Weekly Friday 4pm ET | `find-untapped-thesis` | Find next ideas | `0 20 * * 5` |
+| Monthly 1st | `portfolio-audit` | Full portfolio audit | `0 12 1 * *` |
+| Pre-event (24h before) | `macro-risk-check` | Before Fed/BOJ/major earnings | manual |
+| Quarterly | `tax-optimize` | Year-end planning | manual |
 
 ---
 
@@ -319,9 +540,11 @@ The framework is opinionated — it reflects one specific style (top-down, value
 
 ---
 
-**Version**: 1.1
-**Last updated**: 2026-05-05
+**Version**: 1.3
+**Last updated**: 2026-05-08
 
 ### Changelog
-- **1.1 (2026-05-05)**: insider_ratio.py v3 (openinsider primary, Form 4 code-aware, 90d default window). New cluster_buy_scan.py. Updated all skills to reflect 7-rule insider methodology (yfinance summary broken, recency dominates, 10b5-1 awareness, BUY rarity, news false positives, yfinance blind spots).
+- **1.3 (2026-05-08)**: New `macro-warning` skill — daily batch-mode 8-layer pullback radar (NDX P/E >38 / VIX <14 / F&G >85 = override YELLOW). Cron-friendly. Memory integration via `macro_history.jsonl`. Added bilingual examples section.
+- **1.2 (2026-05-05)**: New `AGENT-TOOL-REFERENCE.md` — natural-language → CLI contract for AI agents. Cross-linked from all docs.
+- **1.1 (2026-05-05)**: insider_ratio.py v3 (openinsider primary, Form 4 code-aware, 90d default window). New cluster_buy_scan.py. Updated all skills to reflect 8-rule insider methodology (yfinance summary broken, recency dominates, 10b5-1 awareness, BUY rarity, news false positives, yfinance blind spots, micro-buy ESPP filter).
 - **1.0 (2026-05-04)**: Initial release.
