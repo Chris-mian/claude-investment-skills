@@ -1,0 +1,49 @@
+name: Price Alert Checker
+
+# Runs check_alerts.py on a cron schedule. Fires Telegram notifications for
+# any active alerts that have hit their condition. Idempotent — fired alerts
+# are marked fired=true and won't re-trigger until cancel_alert.py --rearm.
+
+on:
+  schedule:
+    # Every 15 minutes during US trading hours, weekdays.
+    # 13:00–21:00 UTC = 9:00am–5:00pm ET (covers pre-market through after-hours)
+    - cron: '*/15 13-21 * * 1-5'
+  workflow_dispatch:   # Manual trigger button in GitHub UI for testing
+
+permissions:
+  contents: write   # Needed to commit updated alerts.json
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet yfinance requests
+
+      - name: Run alert checker
+        run: python price-alert/scripts/check_alerts.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Commit updated alerts.json (if any fired)
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name  "GitHub Actions"
+          if git diff --quiet price-alert/alerts.json price-alert/alerts_fired.log 2>/dev/null; then
+            echo "No alert state changes to commit"
+          else
+            git add price-alert/alerts.json price-alert/alerts_fired.log 2>/dev/null || true
+            git commit -m "🚨 Alert state update $(date -u +'%Y-%m-%d %H:%M UTC')" || true
+            git push || true
+          fi
