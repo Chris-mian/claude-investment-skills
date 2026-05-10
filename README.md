@@ -1,10 +1,10 @@
 # Claude Investment Skills
 
-> A streamlined investment analysis system for Claude Code.
+> A streamlined investment analysis system for [Claude Code](https://docs.claude.com/claude-code).
 > Top-down framework: Macro → Year theme → Sector → Stock → Entry → Sizing.
 > Disciplined, valuation-aware, options-friendly. Triggers via natural language in English or Chinese.
 
-[中文版本 / Chinese Version](./README-zh.md)
+[中文版本 / Chinese Version](./README-zh.md) · [5-min Introduction](./INTRODUCTION.md) · [中文介绍](./INTRODUCTION-zh.md)
 
 ## 🤖 For AI agents / CLI users
 
@@ -20,15 +20,223 @@ If you're an AI agent (Claude Code, custom agent, scheduler) or building a CLI w
 
 ## ⚡ Quick Start (3 minutes)
 
-```bash
-# 1. Clone or copy this folder to ~/.claude/skills/
-git clone https://github.com/YOUR_USERNAME/claude-investment-skills.git ~/.claude/skills
+**Prerequisites:** macOS or Linux, Python 3.9+, [Claude Code](https://docs.claude.com/claude-code/install) installed.
 
-# 2. Run setup script
+```bash
+# 1. Clone to where Claude Code looks for skills
+git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
+
+# 2. Run setup (creates Python venv, installs yfinance, verifies all 13 skills)
 bash ~/.claude/skills/setup.sh
 
-# 3. Try it in Claude Code
-/analyze-stock NVDA
+# 3. Talk to Claude in plain English (or Chinese)
+# Open Claude Code, then just type:
+analyze NVDA          # not /analyze-stock — natural language works
+```
+
+**That's it.** No slash commands needed. Skills trigger from natural language.
+
+---
+
+## 🗣️ How natural language triggers skills (the magic)
+
+You don't memorize commands. You just talk. Here's why that works:
+
+### The mechanism
+
+1. **Each skill has a `description:` field** in its `SKILL.md` frontmatter listing trigger phrases (English + Chinese).
+2. **Claude Code matches your input** against all skill descriptions and picks the best fit.
+3. **The matched skill loads its full instructions** and runs (pulls live data, runs analysis, returns answer).
+
+### Example: how `macro-warning` gets triggered
+
+The skill's description includes:
+```yaml
+Triggers in English ("macro warning", "regime check", "is the market at peak",
+"should I take profits", "is it time to buy") or Chinese ("宏观警报",
+"市场是不是顶了", "该不该减仓", "regime 怎么样", "该入场吗")
+```
+
+So **all of these phrasings** invoke the same skill:
+
+| What you say | What happens |
+|---|---|
+| "macro warning" | → triggers `macro-warning` |
+| "is the market at peak right now?" | → triggers `macro-warning` |
+| "should I take profits?" | → triggers `macro-warning` |
+| "宏观警报" | → triggers `macro-warning` |
+| "市场是不是要顶了" | → triggers `macro-warning` |
+| "regime 怎么样" | → triggers `macro-warning` |
+
+### Composite triggers (multiple skills in one ask)
+
+You can chain skills naturally:
+
+```
+You: "I want to buy AMD before earnings, is the macro safe?"
+→ Claude triggers macro-risk-check first (regime read)
+→ then earnings-prep (AMD-specific decision)
+→ then maybe analyze-stock (full deep dive if regime is green)
+```
+
+### Why this is robust
+
+- **Phrasing variations work** — you don't need exact words
+- **Bilingual works mid-sentence** — "analyze NVDA, 顺便看看 macro warning"
+- **Ambiguity gets clarified** — Claude asks if your input could match multiple skills
+- **Slash commands still work** — `/analyze-stock NVDA` is the explicit fallback
+
+The full mapping (every trigger phrase → skill) is in [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md).
+
+---
+
+## 💬 Real Conversation Examples
+
+Five complete conversations showing how this works in practice. Every reply uses **live data** at the time of the conversation.
+
+### Example 1 — Stock deep dive (English)
+
+```
+You: analyze NVDA
+
+Claude: [pulls live price, valuation, insider activity, options IV, and macro
+        context, then returns]
+
+NVDA — current $1,142, Forward P/E 38.2 (vs sector median 26)
+
+Macro context: 🟠 ORANGE regime (NDX P/E 38, VIX 17 — see macro-warning)
+Year theme: AI capex extends through 2026; power constraint risk
+Sector tilt: SMH +138% YoY = mania territory
+Insider activity (90d): 0 buys, 4 sells = $312M (10b5-1 plan-based, lighter)
+Catalysts: 5/20 earnings (implied move ±8%), new GB300 ramp, China overhang
+
+Recommendation: HOLD existing, no add at $1,142
+3-tier entry plan if you want to start fresh:
+  - Tier 1 (35%): $1,020-1,060 (50DMA + 20% drawdown)
+  - Tier 2 (35%): $920-960 (200DMA, historical bounce zone)
+  - Tier 3 (30%): $820 (38% drawdown — max-pain in cyclical correction)
+
+LEAPS alternative: Jan 2027 $1100 call @ $215, breakeven $1315 (15% above
+spot), gives 5x leverage at 50% IV. Stronger if you want defined risk.
+```
+
+### Example 2 — Macro check before adding (Chinese)
+
+```
+你: 宏观警报，能不能加仓？
+
+Claude: [跑 macro_pull.py 拉 8 层指标]
+
+🟠 ORANGE regime — Composite 11/16
+
+触发的硬规则:
+  ✦ Shiller CAPE 42.05 > 38 (extreme)
+  ✦ VIX 17.19 < 18 (exit-signal threshold)
+
+8 层得分:
+  🔴 估值 (2/2)  CAPE 42.05, SPX trailing PE 31.83
+  🔴 波动 (2/2)  VIX 17.19, MOVE 67.25
+  🟡 情绪 (1/2)  CNN F&G 66.9 (一周前 71.2，正在降温)
+  🔴 信用 (2/2)  HY OAS 279 bps (complacency)
+  🟡 货币 (1/2)  USD/JPY 156.62 (差 BOJ 干预区 3.4)
+  🟡 宽度 (1/2)  SPX top 50 中只 44% 在 200DMA 上
+  🟢 CTA  (0/2)  无公开 API
+  🔴 板块 (2/2)  SMH 一年涨 +142% = mania
+
+判断: 不建议加仓。现金 30-35%，trim AI/Semi 抛物 (-15-20%)，
+买便宜 hedge (VIX 17 = put 极便宜)。
+
+升级到 🔴 RED 触发器:
+  - VIX < 14
+  - F&G > 85
+  - USD/JPY > 160
+  - 30Y > 5.10%
+```
+
+### Example 3 — Pre-earnings decision (mixed CN/EN)
+
+```
+You: AMD 财报后天，I'm holding 350 shares at $280 cost
+
+Claude: [pulls AMD live data, options chain, 8-quarter history]
+
+AMD Earnings Prep — reports 5/12 AMC
+
+Implied move (ATM straddle): ±9.2% ($30 swing)
+Last 8 quarters: 6 beat / 2 miss; avg reaction +4.1%, range -12% to +18%
+What's priced in: 17% YoY revenue growth, MI400 ramp Q3/Q4 commentary
+Your position: $98K @ $280 cost, currently +14% (+$13.7K unrealized)
+
+4 scenarios (probability-weighted):
+  📈 Beat + raise (40%): +12-18% → $314-$330
+  📊 In-line (30%):     -2 to +5% → $275-$295
+  📉 Light guide (20%): -8 to -12% → $247-$258
+  💥 Miss + cut (10%):  -15 to -20% → $225-$238
+
+Recommendation: TRIM 30% (105 shares) before earnings, hold 245
+  Why: STCG bracket (held 7 months), implied move pricing rich vs. realized
+       Lock in 14% on partial; remaining gives upside, downside cushion in
+       case of miss.
+  Tax note: 105 × ($295-$280) = $1,575 STCG → ~$580 federal + state
+```
+
+### Example 4 — Portfolio audit from screenshot
+
+```
+You: [pastes screenshot of portfolio]
+     review my portfolio
+
+Claude: [parses screenshot, computes risk metrics]
+
+Portfolio Audit — 12 positions, $487K total
+
+Concentration risks:
+  🔴 NVDA 28% (>10% cap) — single-name risk
+  🟠 SMH+NVDA+TSM = 51% AI semi (sector concentration)
+
+Factor exposure:
+  - High beta names: 67% of book (>50% caution threshold)
+  - LEAPS theta drag: $890/week (acceptable)
+  - All long, no hedges (vulnerable to macro flip)
+
+Trim list (in priority order):
+  1. NVDA: trim 8% → 20% allocation. Sell 21 shares ≈ $24K.
+     Why: concentration, parabolic +60% YoY, macro ORANGE
+  2. SMH: trim 5% → 12%. Sell 6 shares ≈ $3.4K.
+     Why: index proxy duplicates NVDA exposure
+  3. PLTR: trim full position ($18K).
+     Why: insider check shows 0 buys / 41 sells past 12 months
+
+Cash target after trims: 28% (currently 8%)
+Suggested hedge: 1% in QQQ Aug 680P @ $14 = $1,400 protection
+```
+
+### Example 5 — Discovery / theme screening
+
+```
+You: 找未爆发的 AI 电力股
+
+Claude: [screens utility + power-adjacent names with AI data center exposure]
+
+Top 3 untapped AI Power candidates:
+
+1. CEG (Constellation Energy) — $267
+   Forward P/E: 24 (vs VST 31, NRG 28)
+   1Y return: +18% (vs sector +35%)
+   Catalyst: Microsoft 20-yr nuclear PPA (signed 9/2024); reactivation
+            of Three Mile Island Unit 1 by 2028
+   Insider: 2 buys, 0 sells past 90d = STRONG BUY signal
+   Entry: 3-tier — $250 / $230 / $210
+
+2. NRG (NRG Energy) — $94
+   ...
+
+3. PWR (Quanta Services) — $312
+   Picks-and-shovels for grid build-out, not direct AI exposure but
+   ...
+
+Each candidate has: 3-tier entry, position size cap, catalyst date,
+LEAPS alternative, downside scenario.
 ```
 
 ---
@@ -559,10 +767,12 @@ The framework is opinionated — it reflects one specific style (top-down, value
 
 ---
 
-**Version**: 1.4
-**Last updated**: 2026-05-09
+**Version**: 1.5
+**Last updated**: 2026-05-10
+**License**: [MIT](./LICENSE)
 
 ### Changelog
+- **1.5 (2026-05-10)**: First public release on GitHub. Added MIT LICENSE, INTRODUCTION.md/INTRODUCTION-zh.md (5-min friendly intro), full Chinese translations of ARCHITECTURE, INVESTMENT-WORKFLOW, AGENT-TOOL-REFERENCE. Enhanced README with "How natural language triggers skills" section and 5 real conversation examples (EN + CN). Updated setup.sh to verify macro_pull.py.
 - **1.4 (2026-05-09)**: `macro-warning` gets a real data backend — `scripts/macro_pull.py` with direct APIs (yfinance + FRED CSV + CNN unofficial JSON + multpl scrape). New `ARCHITECTURE.md` documenting why we use direct APIs + 1 MCP instead of 3-MCP stack.
 - **1.3 (2026-05-08)**: New `macro-warning` skill — daily batch-mode 8-layer pullback radar (NDX P/E >38 / VIX <14 / F&G >85 = override YELLOW). Cron-friendly. Memory integration via `macro_history.jsonl`. Added bilingual examples section.
 - **1.2 (2026-05-05)**: New `AGENT-TOOL-REFERENCE.md` — natural-language → CLI contract for AI agents. Cross-linked from all docs.

@@ -1,10 +1,10 @@
 # Claude 投资分析 Skills 系统
 
-> Claude Code 的投资分析自动化系统。
+> 给 [Claude Code](https://docs.claude.com/claude-code) 用的投资分析自动化系统。
 > Top-Down 框架：宏观 → 年度主题 → 板块 → 个股 → 入场点位 → 仓位。
 > 价值 + 期权 + 宏观感知三合一，支持中英文自然语言触发。
 
-[English Version](./README.md)
+[English Version](./README.md) · [5 分钟介绍](./INTRODUCTION-zh.md) · [English intro](./INTRODUCTION.md)
 
 ## 🤖 给 AI agent / CLI 用户
 
@@ -20,15 +20,220 @@
 
 ## ⚡ 一键开始（3 分钟）
 
-```bash
-# 1. Clone 这个 repo 到 ~/.claude/skills/
-git clone https://github.com/YOUR_USERNAME/claude-investment-skills.git ~/.claude/skills
+**前置依赖：** macOS 或 Linux、Python 3.9+、已装 [Claude Code](https://docs.claude.com/claude-code/install)。
 
-# 2. 跑 setup 脚本
+```bash
+# 1. Clone 到 Claude Code 的 skills 目录
+git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
+
+# 2. 跑 setup（建 Python venv，装 yfinance，验证 13 个 skills）
 bash ~/.claude/skills/setup.sh
 
-# 3. 在 Claude Code 里试试
-/analyze-stock NVDA
+# 3. 跟 Claude 用大白话说话（中英文都行）
+# 打开 Claude Code，直接说：
+分析一下 NVDA          # 不用 /analyze-stock —— 自然语言就行
+```
+
+**完事。**不需要 slash 命令，skills 自己会被自然语言触发。
+
+---
+
+## 🗣️ 自然语言怎么触发 skill 的（"魔法"）
+
+你**不用记命令**，直接说话就行。原理：
+
+### 机制
+
+1. **每个 skill 在 `SKILL.md` 的 frontmatter** 里有个 `description:` 字段，列了触发短语（中英文都有）。
+2. **Claude Code 拿你的输入**去匹配所有 skill descriptions，挑最匹配的。
+3. **匹配上的 skill 加载完整 instructions** 并跑（拉实时数据、跑分析、返回答案）。
+
+### 示例：`macro-warning` 怎么被触发
+
+它的 description 里写了：
+```yaml
+Triggers in English ("macro warning", "regime check", "is the market at peak",
+"should I take profits", "is it time to buy") or Chinese ("宏观警报",
+"市场是不是顶了", "该不该减仓", "regime 怎么样", "该入场吗")
+```
+
+所以下面**任意说法**都触发同一个 skill：
+
+| 你说 | 发生什么 |
+|---|---|
+| "macro warning" | → 触发 `macro-warning` |
+| "is the market at peak right now?" | → 触发 `macro-warning` |
+| "should I take profits?" | → 触发 `macro-warning` |
+| "宏观警报" | → 触发 `macro-warning` |
+| "市场是不是要顶了" | → 触发 `macro-warning` |
+| "regime 怎么样" | → 触发 `macro-warning` |
+
+### 组合触发（一句话调用多个 skill）
+
+你可以自然地组合：
+
+```
+你: "我想在财报前买 AMD，宏观安全吗？"
+→ Claude 先触发 macro-risk-check（regime 读取）
+→ 再触发 earnings-prep（AMD 财报决策）
+→ 也许再触发 analyze-stock（如果 regime 绿，做完整深度）
+```
+
+### 为什么这个机制稳
+
+- **措辞变化都行** —— 不需要精确字句
+- **句中切换中英文** —— "analyze NVDA, 顺便看看 macro warning" 也行
+- **歧义会被澄清** —— 输入可能匹配多个 skill 时 Claude 会反问
+- **Slash 命令仍然能用** —— `/analyze-stock NVDA` 是显式 fallback
+
+完整映射（每个触发短语 → skill）在 [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md)。
+
+---
+
+## 💬 真实对话示例
+
+5 个完整对话，展示实际怎么用。每个回复都用**实时数据**。
+
+### 例 1 — 个股深度分析（英文）
+
+```
+你: analyze NVDA
+
+Claude: [拉实时价格、估值、内部交易、期权 IV、宏观环境]
+
+NVDA — 当前 $1,142, Forward P/E 38.2 (vs 板块中位数 26)
+
+宏观环境: 🟠 ORANGE regime (NDX P/E 38, VIX 17 — 见 macro-warning)
+年度主题: AI capex 延续到 2026；电力约束风险
+板块倾斜: SMH +138% YoY = mania 区域
+内部交易 (90 天): 0 buys, 4 sells = $312M (10b5-1 计划，权重低)
+催化剂: 5/20 财报 (implied move ±8%), GB300 ramp, 中国市场不确定性
+
+建议: 当前持仓 HOLD, $1,142 不加
+3 档入场计划 (新仓):
+  - Tier 1 (35%): $1,020-1,060 (50DMA + 20% drawdown)
+  - Tier 2 (35%): $920-960 (200DMA, 历史反弹区)
+  - Tier 3 (30%): $820 (38% drawdown — 周期回调 max-pain)
+
+LEAPS 替代: Jan 2027 $1100 call @ $215, 盈亏平衡 $1315 (现价 +15%),
+50% IV 给 5x 杠杆。如果想限定风险，更优。
+```
+
+### 例 2 — 加仓前宏观检查（中文）
+
+```
+你: 宏观警报，能不能加仓？
+
+Claude: [跑 macro_pull.py 拉 8 层指标]
+
+🟠 ORANGE regime — Composite 11/16
+
+触发的硬规则:
+  ✦ Shiller CAPE 42.05 > 38 (extreme)
+  ✦ VIX 17.19 < 18 (exit-signal threshold)
+
+8 层得分:
+  🔴 估值 (2/2)  CAPE 42.05, SPX trailing PE 31.83
+  🔴 波动 (2/2)  VIX 17.19, MOVE 67.25
+  🟡 情绪 (1/2)  CNN F&G 66.9 (一周前 71.2，正在降温)
+  🔴 信用 (2/2)  HY OAS 279 bps (complacency)
+  🟡 货币 (1/2)  USD/JPY 156.62 (差 BOJ 干预区 3.4)
+  🟡 宽度 (1/2)  SPX top 50 中只 44% 在 200DMA 上
+  🟢 CTA  (0/2)  无公开 API
+  🔴 板块 (2/2)  SMH 一年涨 +142% = mania
+
+判断: 不建议加仓。现金 30-35%，trim AI/Semi 抛物 (-15-20%)，
+买便宜 hedge (VIX 17 = put 极便宜)。
+
+升级到 🔴 RED 触发器:
+  - VIX < 14
+  - F&G > 85
+  - USD/JPY > 160
+  - 30Y > 5.10%
+```
+
+### 例 3 — 财报前决策（中英混说）
+
+```
+你: AMD 财报后天，I'm holding 350 shares at $280 cost
+
+Claude: [拉 AMD 实时数据、期权链、过去 8 季度历史]
+
+AMD 财报准备 — 5/12 盘后报
+
+Implied move (ATM straddle): ±9.2% ($30 振幅)
+过去 8 季度: 6 beat / 2 miss; 平均反应 +4.1%, 范围 -12% 到 +18%
+已 price in: 17% YoY 营收增长, MI400 ramp Q3/Q4 commentary
+你的仓位: $98K @ $280 成本, 当前 +14% (+$13.7K 浮盈)
+
+4 个情景 (概率加权):
+  📈 Beat + raise (40%): +12-18% → $314-$330
+  📊 In-line (30%):     -2 到 +5% → $275-$295
+  📉 Light guide (20%): -8 到 -12% → $247-$258
+  💥 Miss + cut (10%):  -15 到 -20% → $225-$238
+
+建议: 财报前 TRIM 30% (105 股), hold 245
+  原因: STCG 区间 (持有 7 个月), implied move 定价偏贵 vs realized
+        部分锁定 14% 利润；剩下保留上行，万一 miss 有缓冲。
+  税务: 105 × ($295-$280) = $1,575 STCG → ~$580 联邦 + 州税
+```
+
+### 例 4 — 截图组合审计
+
+```
+你: [贴组合截图]
+    审一下我的组合
+
+Claude: [解析截图，算风险指标]
+
+组合审计 — 12 仓位, $487K 总额
+
+集中度风险:
+  🔴 NVDA 28% (>10% 红线) — 单股风险
+  🟠 SMH+NVDA+TSM = 51% AI semi (板块集中)
+
+因子暴露:
+  - 高 beta 仓位: 67% (>50% 警戒线)
+  - LEAPS theta drag: $890/周 (可接受)
+  - 全多无对冲 (宏观翻车时脆弱)
+
+减仓清单 (按优先级):
+  1. NVDA: 减到 20% 仓位。卖 21 股 ≈ $24K。
+     原因: 集中度, 抛物 +60% YoY, 宏观 ORANGE
+  2. SMH: 减到 12%。卖 6 股 ≈ $3.4K。
+     原因: 指数 ETF 与 NVDA 仓位重复
+  3. PLTR: 全部清仓 ($18K)。
+     原因: 内部交易检查显示 12 个月 0 买 41 卖
+
+减仓后现金目标: 28% (当前 8%)
+建议对冲: 1% QQQ Aug 680P @ $14 = $1,400 保护
+```
+
+### 例 5 — 主题筛选
+
+```
+你: 找未爆发的 AI 电力股
+
+Claude: [筛公用事业 + 电力相关 + AI 数据中心曝险的标的]
+
+Top 3 未爆发 AI Power 候选:
+
+1. CEG (Constellation Energy) — $267
+   Forward P/E: 24 (vs VST 31, NRG 28)
+   1Y 涨幅: +18% (vs 板块 +35%)
+   催化剂: 微软 20 年核电 PPA (2024/9 已签); 三里岛 1 号机组 2028
+          重启
+   内部交易: 90 天 2 buys, 0 sells = STRONG BUY 信号
+   入场: 3 档 — $250 / $230 / $210
+
+2. NRG (NRG Energy) — $94
+   ...
+
+3. PWR (Quanta Services) — $312
+   电网建设的"卖铲人"，不是直接 AI 曝险但
+   ...
+
+每个候选包含: 3 档入场、仓位上限、催化日期、LEAPS 替代、下行情景。
 ```
 
 ---

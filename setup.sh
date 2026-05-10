@@ -61,11 +61,11 @@ echo ""
 # ─────────────────────────────────────────────────────────────
 # Step 3: Install yfinance and dependencies
 # ─────────────────────────────────────────────────────────────
-echo "Step 3: Installing Python packages (yfinance, pandas, numpy)..."
+echo "Step 3: Installing Python packages (yfinance, pandas, numpy, requests)..."
 $VENV_PATH/bin/pip install --quiet --upgrade pip
-$VENV_PATH/bin/pip install --quiet yfinance pandas numpy
+$VENV_PATH/bin/pip install --quiet yfinance pandas numpy requests
 
-echo -e "  ${OK} Installed yfinance"
+echo -e "  ${OK} Installed yfinance + requests (for macro_pull.py)"
 echo ""
 
 # ─────────────────────────────────────────────────────────────
@@ -112,6 +112,21 @@ if echo "$TEST_OUTPUT2" | grep -q "n_clusters"; then
 else
     echo -e "  ${WARN} cluster_buy_scan.py output unclear. Try manually:"
     echo "      $VENV_PATH/bin/python $SCRIPTS_DIR/cluster_buy_scan.py --days 30"
+fi
+
+echo "Step 5c: Testing macro_pull.py --skip-breadth (FRED + CNN F&G + multpl)..."
+MACRO_SCRIPT="$HOME/.claude/skills/macro-warning/scripts/macro_pull.py"
+if [ -f "$MACRO_SCRIPT" ]; then
+    chmod +x "$MACRO_SCRIPT"
+    TEST_OUTPUT3=$($VENV_PATH/bin/python "$MACRO_SCRIPT" --skip-breadth 2>&1 | tail -30 || true)
+    if echo "$TEST_OUTPUT3" | grep -q '"regime"'; then
+        echo -e "  ${OK} macro_pull.py works (FRED + CNN + multpl + yfinance)"
+    else
+        echo -e "  ${WARN} macro_pull.py output unclear. Try manually:"
+        echo "      $VENV_PATH/bin/python $MACRO_SCRIPT --skip-breadth"
+    fi
+else
+    echo -e "  ${WARN} Missing: $MACRO_SCRIPT"
 fi
 echo ""
 
@@ -173,13 +188,22 @@ echo ""
 echo "Python venv: $VENV_PATH"
 echo "Skills: $SKILLS_DIR"
 echo ""
-echo "Try in Claude Code:"
-echo "  /analyze-stock NVDA"
-echo "  /macro-risk-check"
-echo "  /find-untapped-thesis 'AI Power'"
-echo "  /portfolio-audit"
+echo "Try in Claude Code (just talk — no slash commands needed):"
+echo "  analyze NVDA                     → triggers analyze-stock"
+echo "  macro warning                    → triggers macro-warning"
+echo "  find untapped AI Power names     → triggers find-untapped-thesis"
+echo "  审一下我的组合 (paste screenshot)  → triggers portfolio-audit"
 echo ""
-echo "Read INVESTMENT-WORKFLOW.md for the full decision tree."
+echo "Slash commands also work as explicit fallback:"
+echo "  /analyze-stock NVDA"
+echo "  /macro-warning"
+echo ""
+echo "Reading order:"
+echo "  INTRODUCTION.md          5-min friendly intro"
+echo "  README.md                Full reference + Example prompts"
+echo "  INVESTMENT-WORKFLOW.md   Decision tree (which skill when)"
+echo "  AGENT-TOOL-REFERENCE.md  Exact CLI contract for agents"
+echo "  ARCHITECTURE.md          Why we use direct APIs + 1 MCP, not 3"
 echo ""
 echo "If yfmcp is missing, install it via:"
 echo "  claude mcp add yfmcp -- npx -y @modelcontextprotocol/yfmcp"
