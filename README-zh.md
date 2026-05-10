@@ -8,7 +8,7 @@
 
 ## 🤖 给 AI agent / CLI 用户
 
-如果你是 AI agent（Claude Code、自定义 agent、定时器）或在做 CLI 包装，**先读 [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md)**。它包含：
+如果你是 AI agent（Claude Code、自定义 agent、定时器）或在做 CLI 包装，**先读 [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md)**。架构决策（为什么用 yfinance MCP + 直接 HTTP API + openinsider，而不是 3-MCP 全套）记录在 [`ARCHITECTURE.md`](./ARCHITECTURE.md)。它包含：
 - 每个工具的中英文自然语言触发短语
 - 精确的 CLI 模板和参数说明
 - 用户话术 → 命令的映射例子
