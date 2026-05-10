@@ -14,7 +14,7 @@ If you're an AI agent (Claude Code, custom agent, scheduler) or building a CLI w
 - Example utterance → command mappings
 - Multi-tool composite patterns
 
-`INVESTMENT-WORKFLOW.md` tells you *which skill* to pick. `AGENT-TOOL-REFERENCE.md` tells you *exactly how to invoke its scripts*.
+`INVESTMENT-WORKFLOW.md` tells you *which skill* to pick. `AGENT-TOOL-REFERENCE.md` tells you *exactly how to invoke its scripts*. `ARCHITECTURE.md` explains *why* the data plumbing looks the way it does (yfinance MCP + direct HTTP APIs + openinsider — not a 3-MCP stack).
 
 ---
 
@@ -83,6 +83,23 @@ claude mcp add yfmcp -- npx -y @modelcontextprotocol/yfmcp
 
 #### 2. WebSearch — Built-in
 Already available in Claude Code. Used for macro events, news, contracts.
+
+### Optional: full-MCP stack (NOT recommended for this repo)
+
+Some teams pair Claude with a 3-MCP investment stack:
+
+```
+- Yahoo Finance MCP   → prices, options, VIX     ✅ we use this (yfmcp)
+- FRED MCP            → macro indicators          ❌ we use direct CSV instead
+- SEC EDGAR MCP       → filings + Form 4          ❌ we use openinsider scrape
+```
+
+We deliberately use **only** the first one. Full reasoning in [`ARCHITECTURE.md`](./ARCHITECTURE.md). TL;DR:
+
+- **FRED MCP**: our use case is fixed (6 macro series). Direct `fredgraph.csv` is cron-friendlier and has no MCP startup overhead.
+- **EDGAR MCP**: gives raw Form 4 XML; you'd have to re-implement code-aware filtering, recency bucketing, RSU exclusion, 10b5-1 awareness — all of which our `insider_ratio.py` already does on top of openinsider's pre-parsed data.
+
+Add EDGAR MCP later **only if** you need 10-K / 8-K / S-1 / 13D parsing (none of our current skills need it).
 
 ### Optional MCP Servers (claude.ai connectors)
 
@@ -503,6 +520,8 @@ bash ~/.claude/skills/setup.sh
 ## 📚 Learn More
 
 - **Master decision tree**: [INVESTMENT-WORKFLOW.md](./INVESTMENT-WORKFLOW.md)
+- **Agent CLI contract**: [AGENT-TOOL-REFERENCE.md](./AGENT-TOOL-REFERENCE.md)
+- **Architecture decisions**: [ARCHITECTURE.md](./ARCHITECTURE.md) — why this repo uses direct APIs + 1 MCP, not 3
 - **Each skill's details**: `[skill-name]/SKILL.md`
 - **Macro framework**: See `analyze-stock/SKILL.md` Year Theme section
 - **Insider methodology**: See `review-investment-screenshot/SKILL.md` (existing)
@@ -540,10 +559,11 @@ The framework is opinionated — it reflects one specific style (top-down, value
 
 ---
 
-**Version**: 1.3
-**Last updated**: 2026-05-08
+**Version**: 1.4
+**Last updated**: 2026-05-09
 
 ### Changelog
+- **1.4 (2026-05-09)**: `macro-warning` gets a real data backend — `scripts/macro_pull.py` with direct APIs (yfinance + FRED CSV + CNN unofficial JSON + multpl scrape). New `ARCHITECTURE.md` documenting why we use direct APIs + 1 MCP instead of 3-MCP stack.
 - **1.3 (2026-05-08)**: New `macro-warning` skill — daily batch-mode 8-layer pullback radar (NDX P/E >38 / VIX <14 / F&G >85 = override YELLOW). Cron-friendly. Memory integration via `macro_history.jsonl`. Added bilingual examples section.
 - **1.2 (2026-05-05)**: New `AGENT-TOOL-REFERENCE.md` — natural-language → CLI contract for AI agents. Cross-linked from all docs.
 - **1.1 (2026-05-05)**: insider_ratio.py v3 (openinsider primary, Form 4 code-aware, 90d default window). New cluster_buy_scan.py. Updated all skills to reflect 8-rule insider methodology (yfinance summary broken, recency dominates, 10b5-1 awareness, BUY rarity, news false positives, yfinance blind spots, micro-buy ESPP filter).
