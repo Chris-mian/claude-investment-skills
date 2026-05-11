@@ -1,0 +1,19 @@
+# Cloudflare Worker configuration
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "price-alert-webhook"
+main = "worker.ts"
+compatibility_date = "2025-04-01"
+# account_id is auto-detected from `wrangler login` — no need to hardcode.
+
+# Optional observability — keep request logs for 7 days in CF dashboard.
+[observability]
+enabled = true
+
+# Vars / Secrets are set via `wrangler secret put NAME` (see SETUP-WEBHOOK.md).
+# Required at runtime (set as secrets, never in this file):
+#   TELEGRAM_BOT_TOKEN
+#   TELEGRAM_CHAT_ID
+#   ANTHROPIC_API_KEY
+#   GITHUB_TOKEN
+#   GITHUB_REPO        e.g. "ssurmic/claude-investment-skills"
