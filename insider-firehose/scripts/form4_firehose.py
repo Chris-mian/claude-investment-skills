@@ -1,0 +1,399 @@
+#!/usr/bin/env python3
+"""
+form4_firehose.py — Real-time SEC Form 4 aggregator with Telegram alerts.
+
+Pulls the SEC EDGAR Form 4 "current filings" atom feed every cron tick,
+parses each new filing's XML, filters for OPEN-MARKET PURCHASES (code "P")
+above a configurable USD threshold, and pushes a Telegram alert for each
+qualifying buy.
+
+Why this matters:
+  - SEC EDGAR is the authoritative source for Form 4 (insider transactions).
+    Filings appear in EDGAR 2-5 minutes after submission. openinsider.com
+    re-scrapes EDGAR but with a 12-24 hour lag. This script gives us the
+    SAME data with much lower latency.
+  - We filter to transactionCode = "P" (open-market purchase) only. Codes
+    A/M/F/G/D/C are compensation flows (RSU vest, option exercise, tax
+    withholding, gift, distribution, conversion) — they look like "buys"
+    in some aggregators but reveal NOTHING about insider conviction.
+  - Threshold (default $200k) cuts noise: small ESPP-style buys, director
+    qualifying purchases, etc.
+
+State management:
+  We keep a JSON file of seen accession numbers so cron re-runs don't
+  re-alert on filings we already processed. The state file is committed
+  back to the repo by GitHub Actions, capped at 5000 entries.
+
+Env vars:
+  TELEGRAM_BOT_TOKEN    Bot token (skip Telegram send if missing → stderr only)
+  TELEGRAM_CHAT_ID      Target chat
+  FORM4_MIN_VALUE       Min USD value to trigger alert (default 200000)
+  FORM4_INCLUDE_SELLS   "1" to also alert on sells of equal magnitude (default off)
+  EDGAR_USER_AGENT      Required by SEC: "<email> <product>/<version>"
+                        Default: "ssurmiczizhao@gmail.com form4-firehose/1.0"
+  TEST_MODE             "1" prints alerts to stdout instead of sending Telegram
+"""
+
+import json
+import os
+import re
+import sys
+import time
+import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from pathlib import Path
+
+import requests
+
+# ─── Constants ────────────────────────────────────────────────────────────
+EDGAR_RSS_URL = (
+    "https://www.sec.gov/cgi-bin/browse-edgar"
+    "?action=getcurrent&type=4&output=atom&count=100"
+)
+USER_AGENT = os.environ.get(
+    "EDGAR_USER_AGENT", "ssurmiczizhao@gmail.com form4-firehose/1.0"
+)
+HEADERS = {"User-Agent": USER_AGENT, "Accept": "*/*"}
+
+# Form 4 transaction codes
+CODE_PURCHASE = "P"  # Open market or private purchase — TRUE insider buy
+CODE_SALE = "S"      # Open market or private sale — TRUE insider sell
+# A=Grant/Award, M=Option exercise, F=Tax withholding, G=Gift, D=Distribution,
+# C=Conversion → all compensation flows, NOT insider conviction signals.
+
+MIN_VALUE_USD = int(os.environ.get("FORM4_MIN_VALUE", "200000"))
+INCLUDE_SELLS = os.environ.get("FORM4_INCLUDE_SELLS", "") == "1"
+TEST_MODE = os.environ.get("TEST_MODE", "") == "1"
+
+STATE_FILE = Path(__file__).parent / "form4_state.json"
+
+# Polite throttle: SEC asks for ≤10 req/sec
+HTTP_DELAY = 0.15  # seconds between requests
+
+# ─── State helpers ────────────────────────────────────────────────────────
+def load_state() -> dict:
+    if STATE_FILE.exists():
+        try:
+            return json.loads(STATE_FILE.read_text())
+        except Exception:
+            pass
+    return {"seen_accessions": [], "last_run_iso": None}
+
+
+def save_state(state: dict) -> None:
+    # Cap seen list at 5000 (a few days at typical Form 4 volume)
+    accs = state.get("seen_accessions", [])
+    if len(accs) > 5000:
+        state["seen_accessions"] = accs[-5000:]
+    state["last_run_iso"] = datetime.now(timezone.utc).isoformat()
+    STATE_FILE.write_text(json.dumps(state, indent=2) + "\n")
+
+
+# ─── EDGAR fetch & parse ──────────────────────────────────────────────────
+def fetch_rss() -> str:
+    """Pull the EDGAR atom feed listing the most recent Form 4 filings."""
+    r = requests.get(EDGAR_RSS_URL, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    return r.text
+
+
+def parse_rss(xml_text: str) -> list:
+    """Return list of {accession, link, title, updated} dicts."""
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+    root = ET.fromstring(xml_text)
+    out = []
+    for entry in root.findall("a:entry", ns):
+        title_el = entry.find("a:title", ns)
+        link_el = entry.find("a:link", ns)
+        id_el = entry.find("a:id", ns)
+        updated_el = entry.find("a:updated", ns)
+        if any(el is None for el in (title_el, link_el, id_el)):
+            continue
+        # id format: urn:tag:sec.gov,2008:accession-number=0001209191-26-...
+        accession = id_el.text.split("=")[-1] if id_el.text else None
+        if not accession:
+            continue
+        out.append({
+            "accession": accession,
+            "link": link_el.get("href"),
+            "title": title_el.text or "",
+            "updated": updated_el.text if updated_el is not None else "",
+        })
+    return out
+
+
+def find_form4_xml_url(filing_index_url: str) -> str | None:
+    """Given a filing's index page URL, find the RAW Form 4 XML.
+
+    Each Form 4 filing on EDGAR ships TWO .xml URLs:
+      - .../xslF345X06/ownership.xml  ← XSL-rendered HTML (looks like XML but isn't)
+      - .../ownership.xml             ← the actual raw Form 4 XML we want
+
+    We must pick the path WITHOUT "xsl" in it.
+    """
+    r = requests.get(filing_index_url, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    candidates = re.findall(r'href="([^"]+\.xml)"', r.text)
+    if not candidates:
+        return None
+    # Exclude XSL-rendered HTML view (path contains "xsl" segment)
+    raw = [c for c in candidates if "/xsl" not in c.lower()
+           and "primary_doc" not in c.lower()
+           and "index" not in c.lower()]
+    if not raw:
+        return None
+    pick = raw[0]
+    if not pick.startswith("http"):
+        pick = "https://www.sec.gov" + pick
+    return pick
+
+
+def _text(el) -> str:
+    return el.text.strip() if el is not None and el.text else ""
+
+
+def parse_form4(xml_text: str) -> dict:
+    """Extract issuer, owner, role, and qualifying transactions from a Form 4."""
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return {}
+
+    ticker = _text(root.find(".//issuerTradingSymbol"))
+    company = _text(root.find(".//issuerName"))
+    owner = _text(root.find(".//reportingOwner/reportingOwnerId/rptOwnerName"))
+
+    rel = root.find(".//reportingOwner/reportingOwnerRelationship")
+    role_parts = []
+    title_txt = ""
+    if rel is not None:
+        if _text(rel.find("isDirector")) == "1":
+            role_parts.append("Dir")
+        if _text(rel.find("isOfficer")) == "1":
+            title_txt = _text(rel.find("officerTitle"))
+            role_parts.append(f"Officer/{title_txt}" if title_txt else "Officer")
+        if _text(rel.find("isTenPercentOwner")) == "1":
+            role_parts.append("10%")
+
+    transactions = []
+    for txn in root.findall(".//nonDerivativeTable/nonDerivativeTransaction"):
+        code = _text(txn.find(".//transactionCoding/transactionCode"))
+        if code not in (CODE_PURCHASE, CODE_SALE):
+            continue
+        try:
+            shares = float(_text(txn.find(".//transactionAmounts/transactionShares/value")))
+            price = float(_text(txn.find(".//transactionAmounts/transactionPricePerShare/value")) or 0)
+        except (ValueError, TypeError):
+            continue
+        ad = _text(txn.find(".//transactionAmounts/transactionAcquiredDisposedCode/value"))
+        date = _text(txn.find(".//transactionDate/value"))
+        transactions.append({
+            "code": code,
+            "ad": ad,  # A=acquired, D=disposed
+            "shares": shares,
+            "price": price,
+            "value": shares * price,
+            "date": date,
+        })
+
+    return {
+        "ticker": ticker.upper() if ticker else "",
+        "company": company,
+        "owner": owner,
+        "role": ", ".join(role_parts) if role_parts else "Unknown",
+        "title": title_txt,
+        "transactions": transactions,
+        "is_10pct_only": role_parts == ["10%"],
+    }
+
+
+# ─── Alert formatting ─────────────────────────────────────────────────────
+def role_emoji(role: str, title: str) -> str:
+    """Pick an emoji + weight based on role seniority."""
+    t = (title or "").lower()
+    if "ceo" in t or "chairman" in t or "chief executive" in t:
+        return "👑"  # CEO/Chairman — strongest signal
+    if "cfo" in t or "chief financial" in t:
+        return "💼"  # CFO — strong signal
+    if "president" in t or "coo" in t or "chief operating" in t:
+        return "🏛"
+    if "Officer" in role:
+        return "🧑‍💼"
+    if "Dir" in role:
+        return "🪑"  # Director
+    if "10%" in role:
+        return "🐳"  # 10% holder
+    return "❓"
+
+
+def format_alert(filing: dict, side: str = "BUY") -> str | None:
+    """Build a Markdown alert message. Returns None if no qualifying txn."""
+    txns = filing["transactions"]
+    target_code = CODE_PURCHASE if side == "BUY" else CODE_SALE
+    relevant = [t for t in txns if t["code"] == target_code]
+    if not relevant:
+        return None
+
+    total_value = sum(t["value"] for t in relevant)
+    total_shares = sum(t["shares"] for t in relevant)
+    avg_price = total_value / total_shares if total_shares > 0 else 0
+
+    icon = "🚨🟢" if side == "BUY" else "🚨🔴"
+    label = "INSIDER BUY" if side == "BUY" else "INSIDER SELL"
+    role_icon = role_emoji(filing["role"], filing["title"])
+
+    ticker = filing["ticker"] or "?"
+    company = filing["company"] or "Unknown Issuer"
+    owner = filing["owner"] or "Unknown"
+    role = filing["role"] or "Unknown"
+
+    sec_url = (
+        f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+        f"&CIK={ticker}&type=4&dateb=&owner=include&count=10"
+    )
+
+    lines = [
+        f"{icon} *{label}* — ${total_value:,.0f}",
+        "",
+        f"*Ticker*: `{ticker}`  ({company})",
+        f"{role_icon} *{owner}*",
+        f"_{role}_",
+        "",
+        f"*{total_shares:,.0f} shares @ ${avg_price:,.2f}*",
+    ]
+    if len(relevant) > 1:
+        lines.append(f"({len(relevant)} transactions same filing)")
+    lines.extend([
+        "",
+        f"[SEC EDGAR ›]({sec_url})",
+    ])
+    return "\n".join(lines)
+
+
+# ─── Telegram ─────────────────────────────────────────────────────────────
+def send_telegram(msg: str) -> bool:
+    if TEST_MODE:
+        print("─── TEST_MODE: would send ───", file=sys.stderr)
+        print(msg, file=sys.stderr)
+        print("─── end ───", file=sys.stderr)
+        return True
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        print(f"[WARN] No Telegram creds, message NOT sent:\n{msg}", file=sys.stderr)
+        return False
+    try:
+        r = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": msg,
+                "parse_mode": "Markdown",
+                "disable_web_page_preview": True,
+            },
+            timeout=30,
+        )
+        if r.ok:
+            return True
+        print(f"[ERROR] Telegram {r.status_code}: {r.text[:200]}", file=sys.stderr)
+        return False
+    except Exception as e:
+        print(f"[ERROR] Telegram exception: {e}", file=sys.stderr)
+        return False
+
+
+# ─── Main ─────────────────────────────────────────────────────────────────
+def main() -> int:
+    state = load_state()
+    seen = set(state.get("seen_accessions", []))
+
+    print(f"[INFO] Pulling EDGAR Form 4 feed... (min_value=${MIN_VALUE_USD:,})",
+          file=sys.stderr)
+    try:
+        rss = fetch_rss()
+    except Exception as e:
+        print(f"[FATAL] EDGAR fetch failed: {e}", file=sys.stderr)
+        return 1
+
+    filings = parse_rss(rss)
+    print(f"[INFO] Feed has {len(filings)} filings", file=sys.stderr)
+
+    new_accessions = []
+    alerts_sent = 0
+    processed = 0
+    skipped_below_threshold = 0
+    skipped_10pct_only = 0
+
+    for f in filings:
+        acc = f["accession"]
+        if acc in seen:
+            continue
+        new_accessions.append(acc)
+        processed += 1
+
+        try:
+            time.sleep(HTTP_DELAY)
+            xml_url = find_form4_xml_url(f["link"])
+            if not xml_url:
+                continue
+            time.sleep(HTTP_DELAY)
+            r = requests.get(xml_url, headers=HEADERS, timeout=30)
+            r.raise_for_status()
+            filing = parse_form4(r.text)
+        except Exception as e:
+            print(f"[WARN] Failed parse {acc}: {e}", file=sys.stderr)
+            continue
+
+        if not filing or not filing["ticker"]:
+            continue
+
+        # Process BUYS
+        purchases = [t for t in filing["transactions"] if t["code"] == CODE_PURCHASE]
+        if purchases:
+            total = sum(t["value"] for t in purchases)
+            if total < MIN_VALUE_USD:
+                skipped_below_threshold += 1
+            elif filing["is_10pct_only"]:
+                # Pure 10% holder buys (e.g. Saba Capital activist position) —
+                # different signal than officer/director conviction. Skip by
+                # default; revisit in v2.1 if user wants these too.
+                skipped_10pct_only += 1
+                print(f"[SKIP-10%]  {filing['ticker']:6s}  ${total:>12,.0f}  "
+                      f"{filing['owner']}", file=sys.stderr)
+            else:
+                msg = format_alert(filing, side="BUY")
+                if msg and send_telegram(msg):
+                    alerts_sent += 1
+                    print(f"[ALERT-BUY] {filing['ticker']:6s}  ${total:>12,.0f}  "
+                          f"{filing['owner']} ({filing['role']})", file=sys.stderr)
+
+        # Optionally process SELLS (off by default)
+        if INCLUDE_SELLS:
+            sells = [t for t in filing["transactions"] if t["code"] == CODE_SALE]
+            if sells and not filing["is_10pct_only"]:
+                total = sum(t["value"] for t in sells)
+                # Higher threshold for sells (5x) since sells are noisier
+                sell_threshold = MIN_VALUE_USD * 5
+                if total >= sell_threshold:
+                    msg = format_alert(filing, side="SELL")
+                    if msg and send_telegram(msg):
+                        alerts_sent += 1
+                        print(f"[ALERT-SELL] {filing['ticker']:6s}  ${total:>12,.0f}",
+                              file=sys.stderr)
+
+    # Persist state
+    state["seen_accessions"] = list(seen) + new_accessions
+    save_state(state)
+
+    print(
+        f"[DONE] processed={processed} alerts={alerts_sent} "
+        f"below_threshold={skipped_below_threshold} "
+        f"skipped_10pct={skipped_10pct_only}",
+        file=sys.stderr,
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

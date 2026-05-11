@@ -1,0 +1,73 @@
+name: Insider Firehose (Form 4 Real-Time)
+
+# Real-time SEC Form 4 aggregator. Pulls EDGAR's "current filings" atom feed
+# and pushes a Telegram alert for each open-market insider purchase ≥ $200k.
+#
+# Cadence: every 30 min during US business hours + 2 hours after close, on
+# weekdays only. Form 4 filings are dense between 4pm-6pm ET (post-close).
+# We dedupe across runs via form4_state.json committed back to the repo.
+
+on:
+  schedule:
+    # Every 30 min, 13:00 UTC to 23:30 UTC, Mon-Fri (= 9 AM - 7:30 PM EDT).
+    # GH Actions cron is UTC-only and minimum granularity is 1 min (often
+    # coalesced to 5-15 min during peak load, which is fine for this use).
+    - cron: '*/30 13-23 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      min_value:
+        description: 'Minimum USD buy value to alert (default 200000)'
+        required: false
+        default: '200000'
+      include_sells:
+        description: 'Also alert on large sells (default false)'
+        required: false
+        default: 'false'
+      test_mode:
+        description: 'Test mode (print to log, do NOT send Telegram)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write  # to commit state file back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Run Form 4 scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          FORM4_MIN_VALUE:    ${{ inputs.min_value || '200000' }}
+          FORM4_INCLUDE_SELLS: ${{ inputs.include_sells == 'true' && '1' || '' }}
+          TEST_MODE:           ${{ inputs.test_mode == 'true' && '1' || '' }}
+          EDGAR_USER_AGENT: "ssurmiczizhao@gmail.com form4-firehose/1.0 (ci)"
+        run: |
+          python insider-firehose/scripts/form4_firehose.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain insider-firehose/scripts/form4_state.json)" ]]; then
+            git add insider-firehose/scripts/form4_state.json
+            git commit -m "firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          else
+            echo "No state changes to commit."
+          fi

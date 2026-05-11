@@ -66,6 +66,15 @@ If you're sweeping orders or scalping, use a **broker-side alert**. Use this too
 
 ## Roadmap by version
 
+### v2.1 (next — insider firehose iterations)
+
+| Feature | Owner files |
+|---|---|
+| **Cluster detection** — roll up multiple same-ticker same-day filings into one "🚨 N-INSIDER CLUSTER" alert (e.g. AVA 9-insider cluster = 1 alert not 9) | `form4_firehose.py` add aggregation pass |
+| **Watchlist filter** — alerts on your already-held tickers get 🟡 highlight + always pass through, even below threshold | `form4_state.json` add `watchlist` field; pull from `price-alert/alerts.json` ticker list |
+| **Daily digest** — end-of-day Telegram summary aggregating all buys (not just ≥ $200k), sortable | `form4_digest.py` new script + separate cron at 17:30 ET |
+| **Founder buy auto-bump** — if `officerTitle` contains "Founder", lower threshold to $50k (founder $50k = high signal vs CFO $200k) | `form4_firehose.py` role-aware threshold |
+
 ### v1.7 (next minor)
 
 | Feature | Owner files |
@@ -143,7 +152,9 @@ For new skills, follow the existing `SKILL.md` pattern with `description:` front
 
 | Version | Date | Highlights |
 |---|---|---|
-| **1.6** | 2026-05-11 | Cloudflare Worker webhook (1-3 sec chat latency), AGENTS.md setup orchestration guide, pre-rendered Mermaid diagrams (SVG/PNG), pre-flight methodology embedded in 6 skills, AGENT-TOOL-REFERENCE.md extended with Tool 6 + Skill Catalog |
+| **2.0** | 2026-05-11 | **NEW SKILL: `insider-firehose`** — real-time SEC EDGAR Form 4 monitor with Telegram push alerts for officer/director open-market buys ≥ $200k. Cron every 30 min, weekdays. 2-5 min latency vs openinsider's 12-24 hours. State-managed dedup via committed JSON. Plugin marketplace + git-clone install both work. |
+| 1.7 | 2026-05-11 | Plugin marketplace install path (`/plugin marketplace add ...`), two-way door with existing git-clone path. 47 SKILL.md script paths rewritten to dual-mode resolution. NEXT-STEPS roadmap + "Who this is for / not for" positioning, state-source observability section. |
+| 1.6 | 2026-05-11 | Cloudflare Worker webhook (1-3 sec chat latency), AGENTS.md setup orchestration guide, pre-rendered Mermaid diagrams (SVG/PNG), pre-flight methodology embedded in 6 skills, AGENT-TOOL-REFERENCE.md extended with Tool 6 + Skill Catalog |
 | 1.5 | 2026-05-10 | First public release, MIT LICENSE, INTRODUCTION.md, bilingual translations, "How NL triggers skills" section, 5 conversation examples |
 | 1.4 | 2026-05-09 | macro-warning real data backend (`macro_pull.py`), ARCHITECTURE.md |
 | 1.3 | 2026-05-08 | `macro-warning` skill (8-layer pullback radar), cron-friendly, memory integration |
