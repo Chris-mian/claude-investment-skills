@@ -26,6 +26,45 @@
       "created_price": 195.9499969482422,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "orcl-below-b76a71",
+      "ticker": "ORCL",
+      "condition": {
+        "op": "below",
+        "threshold": 190.0
+      },
+      "note": "\u4ef7\u683c\u8dcc\u81f3 $190",
+      "created": "2026-05-11",
+      "created_price": 195.9499969482422,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "orcl-drop_intraday-6f82f8",
+      "ticker": "ORCL",
+      "condition": {
+        "op": "drop_intraday",
+        "pct": 3.0
+      },
+      "note": "\u5355\u65e5\u8dcc\u5e45\u8fbe 3%\uff08\u542b\u76d8\u540e\uff09",
+      "created": "2026-05-11",
+      "created_price": 195.9499969482422,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "nok-below-662046",
+      "ticker": "NOK",
+      "condition": {
+        "op": "below",
+        "threshold": 12.8
+      },
+      "note": "Set via Telegram chat",
+      "created": "2026-05-11",
+      "created_price": 12.819999694824219,
+      "active": true,
+      "fired": false
     }
   ]
 }
