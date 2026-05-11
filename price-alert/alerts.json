@@ -105,6 +105,19 @@
       "fired_at_utc": "2026-05-11T13:41:06.103846+00:00",
       "fired_at_price": 192.0,
       "fired_reason": "$192.00 \u2264 $192.00"
+    },
+    {
+      "id": "nok-below-d15db3",
+      "ticker": "NOK",
+      "condition": {
+        "op": "below",
+        "threshold": 11.5
+      },
+      "note": "NOK T1 \u52a0\u4ed3 \u2014 put wall 872 OI + \u8ddd 50DMA 20% \u7f13\u51b2",
+      "created": "2026-05-11",
+      "created_price": 13.568599700927734,
+      "active": true,
+      "fired": false
     }
   ]
 }
