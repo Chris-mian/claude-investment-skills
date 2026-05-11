@@ -133,6 +133,135 @@ The full mapping is in [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md).
 
 ---
 
+## 🏗️ How it all works — full architecture (advanced)
+
+If you enable the optional `price-alert` skill with Telegram bot + Anthropic API, here's the complete system in one diagram:
+
+```
+                ┌─────────────────────────────────────┐
+                │   YOU (interact via 2 channels)     │
+                └─────────┬────────────────┬──────────┘
+                          │                │
+              Set/list/   │                │ Receive alerts
+              cancel      │                │ Chat in NL
+              via NL      ↓                ↓
+                ┌─────────────────┐  ┌──────────────────┐
+                │  Claude Code    │  │  Telegram App    │
+                │  (your laptop)  │  │  (your phone)    │
+                └────────┬────────┘  └────────┬─────────┘
+                         │ commits            │ send/receive
+                         ↓                    │
+                ┌────────────────────────────┴────────────┐
+                │   GitHub Repo (your fork)               │
+                │     alerts.json      ← live alert state │
+                │     tg_state.json    ← Telegram msg ptr │
+                │     scripts/*.py     ← logic            │
+                │     .github/workflows/*.yml ← cron defs │
+                │     .env             ❌ NEVER committed │
+                └────────┬────────────────────┬───────────┘
+                         │                    │
+                         │ Secrets injected   │
+                         │ from GH Settings   │
+                         ↓                    ↓
+            ┌──────────────────────┐  ┌──────────────────────┐
+            │ Cron #1              │  │ Cron #2              │
+            │ price-alerts.yml     │  │ telegram-chat.yml    │
+            │ */15 13-21 * * 1-5   │  │ */5 * * * *          │
+            │ (US market hours)    │  │ (24/7)               │
+            └──────────┬───────────┘  └──────────┬───────────┘
+                       │                         │
+                       ↓                         ↓
+            ┌──────────────────────┐  ┌──────────────────────┐
+            │ check_alerts.py      │  │ chat_handler.py      │
+            │  - read alerts.json  │  │  - poll Telegram     │
+            │  - yfinance prices   │  │    getUpdates        │
+            │  - eval conds        │  │  - for each new msg: │
+            │  - if triggered:     │  │    → Anthropic API   │
+            │      push Telegram   │  │      (Claude Sonnet) │
+            │      mark fired=true │  │    → execute tool    │
+            │  - commit alerts.json│  │      (add/list/cncl) │
+            └──────────┬───────────┘  │    → reply Telegram  │
+                       │              │  - commit state      │
+                       │              └──────────┬───────────┘
+                       │                         │
+                       └──────────┬──────────────┘
+                                  ↓
+                       ┌──────────────────────┐
+                       │  Telegram Bot API    │
+                       │  api.telegram.org    │
+                       └──────────┬───────────┘
+                                  ↓
+                            📱 Your Phone
+```
+
+### What GitHub Actions does
+
+**GitHub Actions** is essentially **cron-as-a-service from Microsoft** (they own GitHub). It runs your Python scripts on a schedule in their data centers, for free, with no server to manage.
+
+We use it for **two separate jobs**:
+
+| Workflow | Cron | What it does | Cost |
+|---|---|---|---|
+| `price-alerts.yml` | every 15 min during US market hours | check `alerts.json` → fetch prices → if triggered, push to Telegram | $0 (free public repo) |
+| `telegram-chat.yml` | every 5 min, 24/7 | poll Telegram for new messages → Claude API parses → execute tool → reply | ~$1-2/mo Anthropic API |
+
+Each run spins up a fresh Ubuntu container, installs Python deps, runs the script, commits state changes back to the repo, then shuts down. Total runtime per tick ≈ 30 seconds.
+
+### What each component does
+
+| Component | Role | Where it lives | Who pays |
+|---|---|---|---|
+| **Claude Code** | NL alert setup + portfolio analysis | Your laptop | Free w/ Pro/Max sub |
+| **GitHub repo** | Source of truth for config + scripts | github.com/YOU/claude-investment-skills | Free (public repo) |
+| **GitHub Secrets** | Encrypted credential store | github.com/YOU/.../settings/secrets | Free |
+| **GitHub Actions** | Cron scheduler + Python runner | Microsoft data centers | Free for public repos |
+| **yfinance** | Pulls live stock prices | Yahoo Finance API | Free, no API key |
+| **Telegram bot** | Push notifications + NL chat | Your `@YourBotName_bot` | Free |
+| **Anthropic API** | Parses Telegram messages into tool calls | api.anthropic.com | ~$1-2/mo casual |
+
+### What runs when
+
+```
+You set an alert via Claude Code   → 0 latency (immediate commit + push)
+                                   ↓
+Cron tick (every 15 min)           → up to 15 min lag for next check
+                                   ↓
+Price condition met                → ~1 sec yfinance fetch
+                                   ↓
+Telegram POST                      → ~200 ms
+                                   ↓
+📱 Your phone buzzes               → ~1 sec push delivery
+
+End-to-end: alert can fire 0-15 minutes after price actually crosses.
+```
+
+### What's the AI / LLM doing where?
+
+| Place | LLM involvement |
+|---|---|
+| Claude Code (your terminal) | ✅ Full Claude parses NL when you set alerts |
+| `check_alerts.py` (price scan) | ❌ Zero AI — pure Python `if price <= threshold` |
+| `chat_handler.py` (Telegram chat) | ✅ Claude Sonnet 4.6 via Anthropic API (optional) |
+| Telegram delivery | ❌ Zero AI — just HTTP POST |
+
+**Key insight**: the "intelligence" lives in **two spots only** — Claude Code (your terminal) and optional `chat_handler.py`. The cron infrastructure itself is dumb plumbing.
+
+### Security model
+
+| Item | Where | Visibility |
+|---|---|---|
+| Anthropic API key | `.env` (local) + GitHub Secrets (encrypted) | Only you can decrypt |
+| Telegram bot token | Same | Same |
+| chat_id | Same | Same |
+| `alerts.json` | Committed to public repo | Public but reveals nothing sensitive |
+| Source code (`*.py`, `*.yml`) | Public repo | Public — anyone can audit |
+| `.env` file | Local only, `.gitignore`d | Never committed |
+| `.env.example` (template) | Public repo | Public — placeholders only |
+
+Public repo = anyone sees **which tickers you watch** but can't send messages on your behalf. To hide your watchlist, make the repo private (GitHub Actions free tier: 2000 min/month for private, plenty for this).
+
+---
+
 ## What this repo is NOT
 
 - ❌ A trading bot — no orders are placed, ever

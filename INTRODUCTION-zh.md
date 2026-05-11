@@ -132,6 +132,135 @@ Triggers in English ("macro warning", "regime check", "is the market at peak",
 
 ---
 
+## 🏗️ 完整系统怎么工作 —— 架构图（进阶）
+
+如果你启用了可选的 `price-alert` skill（Telegram bot + Anthropic API），整个系统是这样：
+
+```
+                ┌─────────────────────────────────────┐
+                │   你（通过 2 个通道交互）              │
+                └─────────┬────────────────┬──────────┘
+                          │                │
+              设置/列表/   │                │ 收 alert 通知
+              取消        │                │ 用 NL 跟 bot 聊
+              用 NL       ↓                ↓
+                ┌─────────────────┐  ┌──────────────────┐
+                │  Claude Code    │  │  Telegram App    │
+                │  (你电脑)        │  │  (你手机)         │
+                └────────┬────────┘  └────────┬─────────┘
+                         │ commit             │ 收发
+                         ↓                    │
+                ┌────────────────────────────┴────────────┐
+                │   GitHub Repo (你的 fork)                │
+                │     alerts.json      ← alert 实时状态     │
+                │     tg_state.json    ← Telegram msg 指针  │
+                │     scripts/*.py     ← 逻辑              │
+                │     .github/workflows/*.yml ← cron 配置  │
+                │     .env             ❌ 永不 commit       │
+                └────────┬────────────────────┬───────────┘
+                         │                    │
+                         │ Secrets 从 GH       │
+                         │ Settings 注入       │
+                         ↓                    ↓
+            ┌──────────────────────┐  ┌──────────────────────┐
+            │ Cron #1              │  │ Cron #2              │
+            │ price-alerts.yml     │  │ telegram-chat.yml    │
+            │ */15 13-21 * * 1-5   │  │ */5 * * * *          │
+            │ (美股交易时段)         │  │ (24/7)               │
+            └──────────┬───────────┘  └──────────┬───────────┘
+                       │                         │
+                       ↓                         ↓
+            ┌──────────────────────┐  ┌──────────────────────┐
+            │ check_alerts.py      │  │ chat_handler.py      │
+            │  - 读 alerts.json    │  │  - poll Telegram     │
+            │  - yfinance 拉价格    │  │    getUpdates        │
+            │  - 评估条件          │  │  - 每条新消息:        │
+            │  - 若触发:           │  │    → Anthropic API   │
+            │      推 Telegram    │  │      (Claude Sonnet) │
+            │      标 fired=true   │  │    → 执行工具         │
+            │  - commit json      │  │      (加/列/取消)     │
+            └──────────┬───────────┘  │    → 回复 Telegram   │
+                       │              │  - commit state      │
+                       │              └──────────┬───────────┘
+                       │                         │
+                       └──────────┬──────────────┘
+                                  ↓
+                       ┌──────────────────────┐
+                       │  Telegram Bot API    │
+                       │  api.telegram.org    │
+                       └──────────┬───────────┘
+                                  ↓
+                            📱 你手机
+```
+
+### GitHub Actions 做了什么
+
+**GitHub Actions** 本质上是 **Microsoft 提供的 cron-as-a-service**（他们买了 GitHub）。它在他们数据中心**免费**按时间表跑你的 Python 脚本，**不需要自己管理服务器**。
+
+我们用它跑**两个独立任务**：
+
+| Workflow | Cron | 干什么 | 费用 |
+|---|---|---|---|
+| `price-alerts.yml` | 每 15 分钟（美股交易时段）| 读 `alerts.json` → 拉价格 → 触发就推 Telegram | $0（public repo 免费） |
+| `telegram-chat.yml` | 每 5 分钟（24/7）| poll Telegram 新消息 → Claude API 解析 → 执行工具 → 回复 | ~$1-2/月（Anthropic API） |
+
+每次 cron 触发，它会启动一个新的 Ubuntu 容器、装 Python 依赖、跑脚本、把状态变化 commit 回 repo、然后关闭。每次大约 30 秒。
+
+### 每个组件干啥
+
+| 组件 | 角色 | 在哪 | 谁付钱 |
+|---|---|---|---|
+| **Claude Code** | NL 设 alert + 组合分析 | 你电脑 | 免费（Pro/Max 订阅）|
+| **GitHub repo** | 配置 + 脚本的 source of truth | github.com/你/claude-investment-skills | 免费（public repo） |
+| **GitHub Secrets** | 加密凭证存储 | github.com/你/.../settings/secrets | 免费 |
+| **GitHub Actions** | Cron 调度 + Python runner | Microsoft 数据中心 | public repo 免费 |
+| **yfinance** | 拉实时股价 | Yahoo Finance API | 免费，无 key |
+| **Telegram bot** | 推送通知 + NL 聊天 | 你的 `@YourBotName_bot` | 免费 |
+| **Anthropic API** | 把 Telegram 消息解析成 tool call | api.anthropic.com | ~$1-2/月（casual 用） |
+
+### 什么时候跑啥
+
+```
+你用 Claude Code 设 alert         → 0 延迟（立即 commit + push）
+                                  ↓
+Cron tick (每 15 分钟)            → 最多等 15 分钟下一次检查
+                                  ↓
+价格条件满足                       → ~1 秒 yfinance 拉数据
+                                  ↓
+Telegram POST                     → ~200ms
+                                  ↓
+📱 你手机响                       → ~1 秒推送送达
+
+端到端: alert 在实际价格穿过后 0-15 分钟内触发
+```
+
+### AI / LLM 在哪干活？
+
+| 位置 | LLM 参与 |
+|---|---|
+| Claude Code（你终端）| ✅ 完整 Claude 解析 NL 帮你设 alert |
+| `check_alerts.py`（价格扫描）| ❌ 零 AI —— 纯 Python `if price <= threshold` |
+| `chat_handler.py`（Telegram 聊天）| ✅ Claude Sonnet 4.6 via Anthropic API（可选）|
+| Telegram 推送 | ❌ 零 AI —— 就是 HTTP POST |
+
+**关键洞察**: "智能"只存在**两个地方** —— Claude Code（你终端，Pro 订阅免费）和可选的 `chat_handler.py`（Anthropic API，~$1-2/月）。**Cron 基础设施本身是哑管道**。
+
+### 安全模型
+
+| 项目 | 在哪 | 可见性 |
+|---|---|---|
+| Anthropic API key | `.env`（本地）+ GitHub Secrets（加密）| 只有你能解密 |
+| Telegram bot token | 同上 | 同上 |
+| chat_id | 同上 | 同上 |
+| `alerts.json` | commit 到 public repo | 公开但**没敏感信息**（只是 `{ticker, threshold}`）|
+| 源代码（`*.py`、`*.yml`）| public repo | 公开 —— 任何人能审计 |
+| `.env` 文件 | 只本地，`.gitignore` 中 | 永不 commit |
+| `.env.example`（模板）| public repo | 公开 —— 只有占位符 |
+
+Public repo = 任何人能看到**你盯了哪些标的**但**不能**冒充你发消息或实时读你的 alerts。如果想隐藏 watchlist，把 repo 改 private（GitHub Actions 私有 repo 免费配额 2000 分钟/月，对这个用量够用）。
+
+---
+
 ## 这个 repo **不是**什么
 
 - ❌ 交易机器人 —— 永远不下单
