@@ -146,6 +146,16 @@ def evaluate(alert: dict, current_price: float) -> tuple[bool, str]:
         actual_rise = (current_price / prev_close - 1) * 100
         if actual_rise >= pct:
             return True, f"intraday rise {actual_rise:.1f}% from prev close ${prev_close:.2f} (threshold: +{pct}%)"
+    elif op in ("below_ma_50", "above_ma_50", "below_ma_200", "above_ma_200"):
+        ma = cond.get("ma_at_check")
+        if ma is None or ma <= 0:
+            return False, f"no {op} MA available"
+        ma_label = "50DMA" if "50" in op else "200DMA"
+        diff_pct = (current_price / ma - 1) * 100
+        if op.startswith("below_") and current_price <= ma:
+            return True, f"${current_price:.2f} ≤ {ma_label} ${ma:.2f} ({diff_pct:+.1f}%)"
+        if op.startswith("above_") and current_price >= ma:
+            return True, f"${current_price:.2f} ≥ {ma_label} ${ma:.2f} ({diff_pct:+.1f}%)"
     else:
         return False, f"unknown op: {op}"
 
@@ -222,14 +232,19 @@ def main() -> int:
             n_skipped += 1
             continue
 
-        # For intraday conditions, also fetch yesterday's close so evaluate()
-        # has the reference. Cheap — done once per alert.
-        if alert["condition"]["op"] in ("drop_intraday", "rise_intraday"):
+        # For intraday or MA conditions, fetch reference values at check time.
+        op = alert["condition"]["op"]
+        if op in ("drop_intraday", "rise_intraday") or op.endswith("_ma_50") or op.endswith("_ma_200"):
             try:
                 info = yf.Ticker(ticker).info
-                alert["condition"]["prev_close_at_check"] = info.get("regularMarketPreviousClose") or info.get("previousClose")
+                if op in ("drop_intraday", "rise_intraday"):
+                    alert["condition"]["prev_close_at_check"] = info.get("regularMarketPreviousClose") or info.get("previousClose")
+                if op.endswith("_ma_50"):
+                    alert["condition"]["ma_at_check"] = info.get("fiftyDayAverage")
+                if op.endswith("_ma_200"):
+                    alert["condition"]["ma_at_check"] = info.get("twoHundredDayAverage")
             except Exception:
-                alert["condition"]["prev_close_at_check"] = None
+                pass
 
         triggered, reason = evaluate(alert, price)
         if not triggered:

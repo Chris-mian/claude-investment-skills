@@ -31,6 +31,10 @@ def fmt_condition(c: dict) -> str:
         return f"single-day -{c['pct']}% vs prev close (incl. AH)"
     if op == "rise_intraday":
         return f"single-day +{c['pct']}% vs prev close (incl. AH)"
+    if op == "below_ma_50":  return "≤ 50DMA"
+    if op == "above_ma_50":  return "≥ 50DMA"
+    if op == "below_ma_200": return "≤ 200DMA"
+    if op == "above_ma_200": return "≥ 200DMA"
     return str(c)
 
 

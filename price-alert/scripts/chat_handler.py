@@ -84,16 +84,31 @@ TOOLS = [
                 "ticker": {"type": "string", "description": "Uppercase ticker symbol (e.g. GLW, NVDA, SPY)"},
                 "condition": {
                     "type": "string",
-                    "enum": ["below", "above", "drop", "rise", "drop_intraday", "rise_intraday"],
+                    "enum": [
+                        "below", "above", "drop", "rise",
+                        "drop_intraday", "rise_intraday",
+                        "below_ma_50", "above_ma_50",
+                        "below_ma_200", "above_ma_200",
+                    ],
                     "description": (
                         "below/above = absolute USD price threshold. "
                         "drop/rise = % from current price (anchored at creation, fires once when crossed). "
-                        "drop_intraday/rise_intraday = % move within a single trading day, measured vs "
-                        "the previous regular-session close. Re-anchors each day. Includes pre-market "
-                        "and after-hours quotes. Use this for 'any day drops 3%' / '任意一天跌 3%'."
+                        "drop_intraday/rise_intraday = % move within single trading day, vs previous "
+                        "regular-session close. Re-anchors daily. Includes pre/after-hours quotes. "
+                        "Use for 'any day drops 3%' / '任意一天跌 3%'. "
+                        "below_ma_50/above_ma_50 = price vs 50-day moving average. "
+                        "below_ma_200/above_ma_200 = price vs 200-day moving average. "
+                        "Use MA ops for '跌破 50DMA' / 'breaks 200DMA' / 'crosses 50-day moving avg'."
                     )
                 },
-                "value": {"type": "number", "description": "Price ($) for below/above; percent number (10 = 10%) for drop/rise/drop_intraday/rise_intraday"},
+                "value": {
+                    "type": "number",
+                    "description": (
+                        "Price ($) for below/above. "
+                        "Percent number (10 = 10%) for drop/rise/drop_intraday/rise_intraday. "
+                        "For MA conditions (below_ma_*, above_ma_*), pass 0 — no value needed."
+                    )
+                },
                 "note": {"type": "string", "description": "Optional one-line context shown in the trigger notification"}
             },
             "required": ["ticker", "condition", "value"]
@@ -137,10 +152,27 @@ Style:
 - For "drop 10%" / "跌 10%": that's drop_pct relative to current price, anchored at moment of alert creation
 
 Examples of mapping user intent to tool calls:
+
+Price targets:
 - "alert me when GLW hits $140" → add_alert(GLW, below, 140)
 - "GLW 跌到 140 通知我" → add_alert(GLW, below, 140)
+- "我想在 NVDA $1000 加仓" → add_alert(NVDA, below, 1000, note="加仓 tier 1")
+- "ORCL 涨到 250 我减仓" → add_alert(ORCL, above, 250, note="减仓信号")
+
+% moves from now:
 - "notify if NVDA drops 10%" → add_alert(NVDA, drop, 10)
-- "AMD 单日跌 3%" / "any day drops 3%" → add_alert(AMD, drop_intraday, 3)
+- "等 TSLA 涨 20%" → add_alert(TSLA, rise, 20)
+
+% moves single-day (incl. after-hours):
+- "AMD 单日跌 5%" / "any day drops 5%" → add_alert(AMD, drop_intraday, 5)
+- "SMH 一天 +10%" → add_alert(SMH, rise_intraday, 10)
+
+Moving averages:
+- "VST 跌破 50DMA" / "VST breaks below 50-day MA" → add_alert(VST, below_ma_50, 0)
+- "NVDA 突破 200DMA" / "NVDA breaks 200-day moving average" → add_alert(NVDA, above_ma_200, 0)
+- "AMD 跌破 200DMA" → add_alert(AMD, below_ma_200, 0)
+
+Management:
 - "list my alerts" → list_alerts(active)
 - "cancel GLW" → cancel_alert(GLW)
 - "remove all alerts" → cancel_alert(ALL)

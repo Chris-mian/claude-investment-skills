@@ -46,12 +46,14 @@ def get_current_price(ticker: str) -> float:
 def main() -> int:
     p = argparse.ArgumentParser(description="Add a price alert")
     p.add_argument("ticker", help="Ticker symbol, e.g. GLW")
-    p.add_argument("op", choices=["below", "above", "drop", "rise", "drop_intraday", "rise_intraday"],
-                   help="Trigger condition. drop/rise = % from anchor (set at creation). "
-                        "drop_intraday/rise_intraday = % from previous regular-session close "
-                        "(re-anchored daily, fires on single-day moves incl. pre/after-hours).")
-    p.add_argument("value", type=float,
-                   help="Price ($) for below/above; percent (10 = 10%%) for drop/rise")
+    p.add_argument("op", choices=[
+        "below", "above", "drop", "rise",
+        "drop_intraday", "rise_intraday",
+        "below_ma_50", "above_ma_50", "below_ma_200", "above_ma_200",
+    ], help="Trigger condition. See README/EXAMPLES.md for all options.")
+    p.add_argument("value", type=float, nargs="?", default=0.0,
+                   help="Price ($) for below/above; percent for drop/rise/_intraday. "
+                        "Not needed for MA conditions (compares price vs current MA).")
     p.add_argument("--note", default="", help="Free-form note shown in alert")
     p.add_argument("--anchor", type=float,
                    help="Anchor price for drop/rise (default: current price)")
@@ -84,6 +86,11 @@ def main() -> int:
     elif args.op == "rise_intraday":
         condition = {"op": "rise_intraday", "pct": args.value}
         target_str = f"single-day rise ≥ {args.value}% (vs prev regular close, re-anchored daily, incl. pre/after-hours)"
+    elif args.op in ("below_ma_50", "above_ma_50", "below_ma_200", "above_ma_200"):
+        condition = {"op": args.op}
+        direction = "below" if args.op.startswith("below_") else "above"
+        period = "50-day" if "50" in args.op else "200-day"
+        target_str = f"price {direction} {period} moving average (re-fetched at each poll)"
 
     alert = {
         "id": f"{ticker.lower()}-{args.op}-{uuid.uuid4().hex[:6]}",

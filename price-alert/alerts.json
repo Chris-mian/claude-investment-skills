@@ -18,7 +18,8 @@
       "ticker": "ORCL",
       "condition": {
         "op": "drop_intraday",
-        "pct": 3.0
+        "pct": 3.0,
+        "prev_close_at_check": 194.59
       },
       "note": "ORCL \u5355\u65e5\u8dcc\u5e45\u8d85\u8fc7 3%\uff08\u542b\u76d8\u540e\uff09",
       "created": "2026-05-11",
