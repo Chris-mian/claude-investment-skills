@@ -6,9 +6,14 @@ name: Price Alert Checker
 
 on:
   schedule:
-    # Every 15 minutes during US trading hours, weekdays.
-    # 13:00–21:00 UTC = 9:00am–5:00pm ET (covers pre-market through after-hours)
-    - cron: '*/15 13-21 * * 1-5'
+    # Every 15 minutes, 24/7. Why not just market hours?
+    # - drop_intraday alerts can fire on pre-market (4am ET / 8 UTC) and
+    #   after-hours (4pm–8pm ET / 20–24 UTC) news-driven moves.
+    # - Weekend cron ticks are essentially free on public repos and
+    #   harmless: yfinance returns last regular-session close, no false
+    #   trigger possible against a flat reference.
+    # - User asked for "包括盘后" (including after-hours).
+    - cron: '*/15 * * * *'
   workflow_dispatch:   # Manual trigger button in GitHub UI for testing
 
 permissions:

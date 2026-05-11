@@ -129,6 +129,23 @@ def evaluate(alert: dict, current_price: float) -> tuple[bool, str]:
         if current_price >= target:
             actual_rise = (current_price / anchor - 1) * 100
             return True, f"rose {actual_rise:.1f}% from ${anchor:.2f} (threshold: +{pct}%)"
+    elif op == "drop_intraday":
+        # Triggers if current price (incl. pre-market / after-hours) is X%
+        # below the most recent regular-session close. Re-evaluates each
+        # poll so the reference price advances daily.
+        prev_close = cond.get("prev_close_at_check")
+        if prev_close is None or prev_close <= 0:
+            return False, "no prev close available"
+        actual_drop = (1 - current_price / prev_close) * 100
+        if actual_drop >= pct:
+            return True, f"intraday drop {actual_drop:.1f}% from prev close ${prev_close:.2f} (threshold: -{pct}%)"
+    elif op == "rise_intraday":
+        prev_close = cond.get("prev_close_at_check")
+        if prev_close is None or prev_close <= 0:
+            return False, "no prev close available"
+        actual_rise = (current_price / prev_close - 1) * 100
+        if actual_rise >= pct:
+            return True, f"intraday rise {actual_rise:.1f}% from prev close ${prev_close:.2f} (threshold: +{pct}%)"
     else:
         return False, f"unknown op: {op}"
 
@@ -204,6 +221,15 @@ def main() -> int:
             print(f"  SKIP {ticker}: price fetch failed")
             n_skipped += 1
             continue
+
+        # For intraday conditions, also fetch yesterday's close so evaluate()
+        # has the reference. Cheap — done once per alert.
+        if alert["condition"]["op"] in ("drop_intraday", "rise_intraday"):
+            try:
+                info = yf.Ticker(ticker).info
+                alert["condition"]["prev_close_at_check"] = info.get("regularMarketPreviousClose") or info.get("previousClose")
+            except Exception:
+                alert["condition"]["prev_close_at_check"] = None
 
         triggered, reason = evaluate(alert, price)
         if not triggered:

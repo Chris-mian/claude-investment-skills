@@ -84,10 +84,16 @@ TOOLS = [
                 "ticker": {"type": "string", "description": "Uppercase ticker symbol (e.g. GLW, NVDA, SPY)"},
                 "condition": {
                     "type": "string",
-                    "enum": ["below", "above", "drop", "rise"],
-                    "description": "below/above for absolute price; drop/rise for % from current price"
+                    "enum": ["below", "above", "drop", "rise", "drop_intraday", "rise_intraday"],
+                    "description": (
+                        "below/above = absolute USD price threshold. "
+                        "drop/rise = % from current price (anchored at creation, fires once when crossed). "
+                        "drop_intraday/rise_intraday = % move within a single trading day, measured vs "
+                        "the previous regular-session close. Re-anchors each day. Includes pre-market "
+                        "and after-hours quotes. Use this for 'any day drops 3%' / '任意一天跌 3%'."
+                    )
                 },
-                "value": {"type": "number", "description": "Price ($) for below/above; percent number (10 = 10%) for drop/rise"},
+                "value": {"type": "number", "description": "Price ($) for below/above; percent number (10 = 10%) for drop/rise/drop_intraday/rise_intraday"},
                 "note": {"type": "string", "description": "Optional one-line context shown in the trigger notification"}
             },
             "required": ["ticker", "condition", "value"]
@@ -134,9 +140,27 @@ Examples of mapping user intent to tool calls:
 - "alert me when GLW hits $140" → add_alert(GLW, below, 140)
 - "GLW 跌到 140 通知我" → add_alert(GLW, below, 140)
 - "notify if NVDA drops 10%" → add_alert(NVDA, drop, 10)
+- "AMD 单日跌 3%" / "any day drops 3%" → add_alert(AMD, drop_intraday, 3)
 - "list my alerts" → list_alerts(active)
 - "cancel GLW" → cancel_alert(GLW)
 - "remove all alerts" → cancel_alert(ALL)
+
+Compound requests (user says "X OR Y", "或者", "and also"):
+Decompose into multiple add_alert calls in the SAME turn. Each tool_use
+block creates a separate alert; they fire independently. Examples:
+
+- "ORCL 跌到 190 或者 一天跌 3% 通知我"
+  → add_alert(ORCL, below, 190) AND add_alert(ORCL, drop_intraday, 3)
+
+- "alert me if NVDA hits 1300 or drops 15% in a day"
+  → add_alert(NVDA, above, 1300) AND add_alert(NVDA, drop_intraday, 15)
+
+In the reply, mention you created N alerts.
+
+After-hours / pre-market handling: ALL conditions check yfinance's latest
+quote, which includes extended-hours trading when active. drop_intraday
+also compares against previous regular-session close, so a -3% AH move
+will fire it. No special flag needed.
 
 For questions NOT about alerts (e.g. "what's NVDA price?", "should I buy AMD?"):
 - Politely say you only handle alert management

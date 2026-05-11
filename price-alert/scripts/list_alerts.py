@@ -27,6 +27,10 @@ def fmt_condition(c: dict) -> str:
     if op == "rise_pct":
         target = c["anchor_price"] * (1 + c["pct"]/100)
         return f"+{c['pct']}% from ${c['anchor_price']:.2f} (≥ ${target:.2f})"
+    if op == "drop_intraday":
+        return f"single-day -{c['pct']}% vs prev close (incl. AH)"
+    if op == "rise_intraday":
+        return f"single-day +{c['pct']}% vs prev close (incl. AH)"
     return str(c)
 
 
