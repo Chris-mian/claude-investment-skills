@@ -136,62 +136,76 @@ Triggers in English ("macro warning", "regime check", "is the market at peak",
 
 如果你启用了可选的 `price-alert` skill（Telegram bot + Anthropic API），整个系统是这样：
 
+```mermaid
+flowchart TB
+    User([👤 你])
+    Phone[📱 手机 Telegram]
+    ClaudeCode[💬 Claude Code<br/>你电脑]
+
+    User -->|"用 NL 设 alert<br/>'GLW 跌到 140 通知我'"| ClaudeCode
+    User <-->|"用 NL 跟 bot 聊"| Phone
+
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>你的 fork)]
+
+    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>每 15 分钟，交易时段"]
+    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>每 5 分钟，24/7"]
+
+    Secrets[🔐 GitHub Secrets<br/>加密: token, chat_id, api_key]
+    Secrets -.->|"注入 env vars"| W1
+    Secrets -.->|"注入 env vars"| W2
+
+    W1 --> CheckPy[check_alerts.py]
+    W2 --> ChatPy[chat_handler.py]
+
+    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API<br/>via yfinance])
+    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
+    ChatPy <-->|"解析 NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+
+    CheckPy -->|"alert 触发:<br/>sendMessage"| TGAPI
+    TGAPI -->|"推送通知"| Phone
+
+    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+
+    class User,Phone,ClaudeCode user
+    class W1,W2,CheckPy,ChatPy worker
+    class YF,TGAPI,Claude api
+    class Repo storage
+    class Secrets secret
 ```
-                ┌─────────────────────────────────────┐
-                │   你（通过 2 个通道交互）              │
-                └─────────┬────────────────┬──────────┘
-                          │                │
-              设置/列表/   │                │ 收 alert 通知
-              取消        │                │ 用 NL 跟 bot 聊
-              用 NL       ↓                ↓
-                ┌─────────────────┐  ┌──────────────────┐
-                │  Claude Code    │  │  Telegram App    │
-                │  (你电脑)        │  │  (你手机)         │
-                └────────┬────────┘  └────────┬─────────┘
-                         │ commit             │ 收发
-                         ↓                    │
-                ┌────────────────────────────┴────────────┐
-                │   GitHub Repo (你的 fork)                │
-                │     alerts.json      ← alert 实时状态     │
-                │     tg_state.json    ← Telegram msg 指针  │
-                │     scripts/*.py     ← 逻辑              │
-                │     .github/workflows/*.yml ← cron 配置  │
-                │     .env             ❌ 永不 commit       │
-                └────────┬────────────────────┬───────────┘
-                         │                    │
-                         │ Secrets 从 GH       │
-                         │ Settings 注入       │
-                         ↓                    ↓
-            ┌──────────────────────┐  ┌──────────────────────┐
-            │ Cron #1              │  │ Cron #2              │
-            │ price-alerts.yml     │  │ telegram-chat.yml    │
-            │ */15 13-21 * * 1-5   │  │ */5 * * * *          │
-            │ (美股交易时段)         │  │ (24/7)               │
-            └──────────┬───────────┘  └──────────┬───────────┘
-                       │                         │
-                       ↓                         ↓
-            ┌──────────────────────┐  ┌──────────────────────┐
-            │ check_alerts.py      │  │ chat_handler.py      │
-            │  - 读 alerts.json    │  │  - poll Telegram     │
-            │  - yfinance 拉价格    │  │    getUpdates        │
-            │  - 评估条件          │  │  - 每条新消息:        │
-            │  - 若触发:           │  │    → Anthropic API   │
-            │      推 Telegram    │  │      (Claude Sonnet) │
-            │      标 fired=true   │  │    → 执行工具         │
-            │  - commit json      │  │      (加/列/取消)     │
-            └──────────┬───────────┘  │    → 回复 Telegram   │
-                       │              │  - commit state      │
-                       │              └──────────┬───────────┘
-                       │                         │
-                       └──────────┬──────────────┘
-                                  ↓
-                       ┌──────────────────────┐
-                       │  Telegram Bot API    │
-                       │  api.telegram.org    │
-                       └──────────┬───────────┘
-                                  ↓
-                            📱 你手机
-```
+
+### 💰 每月成本估算
+
+| 组件 | 费用 | 说明 |
+|---|---|---|
+| **GitHub Actions**（public repo）| **$0** | 免费无限分钟 |
+| **GitHub Actions**（private repo）| **~$0-$70/月** | 免费配额 2000 min/月；每次 cron ≈ 0.5-1 计费分钟。`*/5 * * * *` 24/7 ≈ 4320 min/月。保持 public 就是 $0。|
+| **Telegram Bot API** | **$0** | 永久免费，没碰过 quota |
+| **Yahoo Finance**（via yfinance）| **$0** | 公开 API，不用 key |
+| **Claude Code**（NL 设 alert）| **$0** | 你的 Pro/Max 订阅覆盖 |
+| **Anthropic API**（`chat_handler.py`）| **~$0.5–$5/月** | 见下面细分 |
+
+**Anthropic API 成本细分**（Claude Sonnet 4.6 @ $3/M input, $15/M output）：
+
+每条 Telegram 消息处理 ≈ 700 input + 150 output tokens = **~$0.004 一条消息**
+
+| 你的用量 | 每月费用 |
+|---|---|
+| 闲置（0 条/天）| $0 —— polling 本身不要钱，没新消息就不调 Claude |
+| 轻度（5 条/天）| ~$0.60/月 |
+| 中度（30 条/天）| ~$3.60/月 |
+| 重度（100 条/天）| ~$12/月 |
+
+**建议**：$5 充值够中度用法 ~2 个月。可以设 auto-reload（balance 低于 $5 时自动充）省心。
+
+**省钱 tip**：只有 `chat_handler.py` 调 Claude API。如果你**只要单向 alert**（不要 bot 对话），别启用 `telegram-chat.yml` —— 永远 $0。
+
+---
 
 ### GitHub Actions 做了什么
 

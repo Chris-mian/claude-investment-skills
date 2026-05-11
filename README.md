@@ -38,6 +38,59 @@ analyze NVDA          # not /analyze-stock — natural language works
 
 ---
 
+## 🏗️ Architecture at a glance
+
+For the `price-alert` skill (optional Telegram + Anthropic API integration):
+
+```mermaid
+flowchart TB
+    User([👤 You])
+    Phone[📱 Telegram on Phone]
+    ClaudeCode[💬 Claude Code<br/>your laptop]
+
+    User -->|"set alerts via NL<br/>'GLW 跌到 140 通知我'"| ClaudeCode
+    User <-->|"chat in NL with bot"| Phone
+
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>your fork)]
+
+    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>every 15min, mkt-hrs"]
+    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>every 5min, 24/7"]
+
+    Secrets[🔐 GitHub Secrets<br/>encrypted: token, chat_id, api_key]
+    Secrets -.->|"inject env vars"| W1
+    Secrets -.->|"inject env vars"| W2
+
+    W1 --> CheckPy[check_alerts.py]
+    W2 --> ChatPy[chat_handler.py]
+
+    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API<br/>via yfinance])
+    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
+    ChatPy <-->|"parse NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+
+    CheckPy -->|"alert fired:<br/>sendMessage"| TGAPI
+    TGAPI -->|"push notification"| Phone
+
+    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+
+    class User,Phone,ClaudeCode user
+    class W1,W2,CheckPy,ChatPy worker
+    class YF,TGAPI,Claude api
+    class Repo storage
+    class Secrets secret
+```
+
+**Monthly cost estimate**: $0 if you skip the optional Telegram chat bot; ~$1-4/mo for moderate use of bidirectional NL chat via Anthropic API. GitHub Actions is free on public repos. Full breakdown in [INTRODUCTION.md](./INTRODUCTION.md#-what-this-costs-you-per-month).
+
+For a full deep-dive into how each piece works, see [INTRODUCTION.md → How it all works](./INTRODUCTION.md#-how-it-all-works--full-architecture-advanced).
+
+---
+
 ## 🗣️ How natural language triggers skills (the magic)
 
 You don't memorize commands. You just talk. Here's why that works:

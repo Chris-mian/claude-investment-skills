@@ -135,64 +135,78 @@ The full mapping is in [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md).
 
 ## 🏗️ How it all works — full architecture (advanced)
 
-If you enable the optional `price-alert` skill with Telegram bot + Anthropic API, here's the complete system in one diagram:
+If you enable the optional `price-alert` skill with Telegram bot + Anthropic API, here's the complete system:
 
+```mermaid
+flowchart TB
+    User([👤 You])
+    Phone[📱 Telegram on Phone]
+    ClaudeCode[💬 Claude Code<br/>your laptop]
+
+    User -->|"set alerts via NL<br/>'GLW 跌到 140 通知我'"| ClaudeCode
+    User <-->|"chat in NL with bot"| Phone
+
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>your fork)]
+
+    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>every 15min, mkt-hrs"]
+    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>every 5min, 24/7"]
+
+    Secrets[🔐 GitHub Secrets<br/>encrypted: token, chat_id, api_key]
+    Secrets -.->|"inject env vars"| W1
+    Secrets -.->|"inject env vars"| W2
+
+    W1 --> CheckPy[check_alerts.py]
+    W2 --> ChatPy[chat_handler.py]
+
+    CheckPy <-->|"prices"| YF([📊 Yahoo Finance API<br/>via yfinance])
+    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
+    ChatPy <-->|"parse NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+
+    CheckPy -->|"alert fired:<br/>sendMessage"| TGAPI
+    TGAPI -->|"push notification"| Phone
+
+    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+
+    class User,Phone,ClaudeCode user
+    class W1,W2,CheckPy,ChatPy worker
+    class YF,TGAPI,Claude api
+    class Repo storage
+    class Secrets secret
 ```
-                ┌─────────────────────────────────────┐
-                │   YOU (interact via 2 channels)     │
-                └─────────┬────────────────┬──────────┘
-                          │                │
-              Set/list/   │                │ Receive alerts
-              cancel      │                │ Chat in NL
-              via NL      ↓                ↓
-                ┌─────────────────┐  ┌──────────────────┐
-                │  Claude Code    │  │  Telegram App    │
-                │  (your laptop)  │  │  (your phone)    │
-                └────────┬────────┘  └────────┬─────────┘
-                         │ commits            │ send/receive
-                         ↓                    │
-                ┌────────────────────────────┴────────────┐
-                │   GitHub Repo (your fork)               │
-                │     alerts.json      ← live alert state │
-                │     tg_state.json    ← Telegram msg ptr │
-                │     scripts/*.py     ← logic            │
-                │     .github/workflows/*.yml ← cron defs │
-                │     .env             ❌ NEVER committed │
-                └────────┬────────────────────┬───────────┘
-                         │                    │
-                         │ Secrets injected   │
-                         │ from GH Settings   │
-                         ↓                    ↓
-            ┌──────────────────────┐  ┌──────────────────────┐
-            │ Cron #1              │  │ Cron #2              │
-            │ price-alerts.yml     │  │ telegram-chat.yml    │
-            │ */15 13-21 * * 1-5   │  │ */5 * * * *          │
-            │ (US market hours)    │  │ (24/7)               │
-            └──────────┬───────────┘  └──────────┬───────────┘
-                       │                         │
-                       ↓                         ↓
-            ┌──────────────────────┐  ┌──────────────────────┐
-            │ check_alerts.py      │  │ chat_handler.py      │
-            │  - read alerts.json  │  │  - poll Telegram     │
-            │  - yfinance prices   │  │    getUpdates        │
-            │  - eval conds        │  │  - for each new msg: │
-            │  - if triggered:     │  │    → Anthropic API   │
-            │      push Telegram   │  │      (Claude Sonnet) │
-            │      mark fired=true │  │    → execute tool    │
-            │  - commit alerts.json│  │      (add/list/cncl) │
-            └──────────┬───────────┘  │    → reply Telegram  │
-                       │              │  - commit state      │
-                       │              └──────────┬───────────┘
-                       │                         │
-                       └──────────┬──────────────┘
-                                  ↓
-                       ┌──────────────────────┐
-                       │  Telegram Bot API    │
-                       │  api.telegram.org    │
-                       └──────────┬───────────┘
-                                  ↓
-                            📱 Your Phone
-```
+
+### 💰 What this costs you per month
+
+| Component | Cost | Notes |
+|---|---|---|
+| **GitHub Actions** (public repo) | **$0** | Unlimited free minutes |
+| **GitHub Actions** (private repo) | **~$0-$70/mo** | 2000 free min/mo; each cron tick ≈ 0.5-1 billable min. `*/5 * * * *` 24/7 ≈ 4320 min/mo. Stay public to keep $0. |
+| **Telegram Bot API** | **$0** | Always free, no quotas hit |
+| **Yahoo Finance** (via yfinance) | **$0** | Public API, no key |
+| **Claude Code** (NL alert setup) | **$0** | Covered by your Pro/Max sub |
+| **Anthropic API** (`chat_handler.py`) | **~$0.5–$5/mo** | See breakdown below |
+
+**Anthropic API cost breakdown** (Claude Sonnet 4.6 @ $3/M input, $15/M output):
+
+Per Telegram message processed: ~700 input + ~150 output tokens = **~$0.004 per message**
+
+| Your usage | Monthly cost |
+|---|---|
+| Idle (0 msgs/day) | $0 — polling itself costs nothing, no Claude call when no new messages |
+| Light (5 msgs/day) | ~$0.60/mo |
+| Moderate (30 msgs/day) | ~$3.60/mo |
+| Heavy (100 msgs/day) | ~$12/mo |
+
+**Recommendation**: $5 credit deposit covers ~2 months at moderate usage. Set up auto-reload at $5 trigger if you want it to never run out.
+
+**Cost-saving tip**: only the `chat_handler.py` workflow uses Claude API. If you only want one-way price alerts (no bot conversations), don't enable `telegram-chat.yml` — your cost stays $0 forever.
+
+---
 
 ### What GitHub Actions does
 

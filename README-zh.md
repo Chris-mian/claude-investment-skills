@@ -38,6 +38,59 @@ bash ~/.claude/skills/setup.sh
 
 ---
 
+## 🏗️ 架构一览
+
+`price-alert` skill（可选 Telegram + Anthropic API 集成）的完整架构：
+
+```mermaid
+flowchart TB
+    User([👤 你])
+    Phone[📱 手机 Telegram]
+    ClaudeCode[💬 Claude Code<br/>你电脑]
+
+    User -->|"用 NL 设 alert<br/>'GLW 跌到 140 通知我'"| ClaudeCode
+    User <-->|"用 NL 跟 bot 聊"| Phone
+
+    ClaudeCode -->|"git commit + push<br/>alerts.json"| Repo[(🌐 GitHub Repo<br/>你的 fork)]
+
+    Repo -->|"checkout code"| W1["⏰ Workflow #1<br/>price-alerts.yml<br/>每 15 分钟，交易时段"]
+    Repo -->|"checkout code"| W2["⏰ Workflow #2<br/>telegram-chat.yml<br/>每 5 分钟，24/7"]
+
+    Secrets[🔐 GitHub Secrets<br/>加密: token, chat_id, api_key]
+    Secrets -.->|"注入 env vars"| W1
+    Secrets -.->|"注入 env vars"| W2
+
+    W1 --> CheckPy[check_alerts.py]
+    W2 --> ChatPy[chat_handler.py]
+
+    CheckPy <-->|"价格"| YF([📊 Yahoo Finance API<br/>via yfinance])
+    ChatPy <-->|"getUpdates"| TGAPI([📡 Telegram Bot API])
+    ChatPy <-->|"解析 NL + tool use"| Claude([🧠 Anthropic API<br/>Claude Sonnet 4.6])
+
+    CheckPy -->|"alert 触发:<br/>sendMessage"| TGAPI
+    TGAPI -->|"推送通知"| Phone
+
+    ChatPy -.->|"commit state<br/>+ alerts.json"| Repo
+
+    classDef user fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    classDef worker fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    classDef api fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    classDef storage fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    classDef secret fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+
+    class User,Phone,ClaudeCode user
+    class W1,W2,CheckPy,ChatPy worker
+    class YF,TGAPI,Claude api
+    class Repo storage
+    class Secrets secret
+```
+
+**每月费用估算**：如果跳过可选的 Telegram chat bot = **$0**；中度用 bidirectional NL chat ~$1-4/月（Anthropic API）。GitHub Actions 在 public repo 永远免费。完整成本细分见 [INTRODUCTION-zh.md](./INTRODUCTION-zh.md#-每月成本估算)。
+
+每个组件的详细工作机制见 [INTRODUCTION-zh.md → 完整系统怎么工作](./INTRODUCTION-zh.md#-完整系统怎么工作--架构图进阶)。
+
+---
+
 ## 🗣️ 自然语言怎么触发 skill 的（"魔法"）
 
 你**不用记命令**，直接说话就行。原理：
