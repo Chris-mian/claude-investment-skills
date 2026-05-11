@@ -142,7 +142,7 @@ Compute via yfmcp:
 
 Run (uses openinsider as primary source, 90-day default window, code-aware):
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER" --window 90
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER" --window 90
 ```
 For high-stakes calls add `--source both` to cross-verify against yfinance.
 
@@ -271,7 +271,7 @@ Run all 10 steps. Don't shortcut. The user is asking for a full analysis, not an
 | Historical prices | `mcp__yfmcp__yfinance_get_price_history` |
 | Option chain | `mcp__yfmcp__yfinance_get_option_chain` |
 | News | `mcp__yfmcp__yfinance_get_ticker_news` + `WebSearch` |
-| Insider | `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py` |
-| Max pain | `~/.claude/skills/review-investment-screenshot/scripts/max_pain.py` |
-| Option walls | `~/.claude/skills/review-investment-screenshot/scripts/option_walls.py` |
+| Insider | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1)` |
+| Max pain | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1)` |
+| Option walls | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1)` |
 | Macro events | `WebSearch` |

@@ -54,23 +54,42 @@
 
 ---
 
-## ⚡ 一键开始（3 分钟）
+## ⚡ 一键开始 —— **二选一**
 
 **前置依赖：** macOS 或 Linux、Python 3.9+、已装 [Claude Code](https://docs.claude.com/claude-code/install)。
+
+### 选项 1 —— Plugin marketplace（推荐新用户，30 秒）
+
+```bash
+# 1. 在 Claude Code 里添加 marketplace
+/plugin marketplace add ssurmic/claude-investment-skills
+
+# 2. 装 plugin
+/plugin install claude-investment-skills@claude-investment-skills-marketplace
+
+# 3. 跑 setup（建 Python venv，装 yfinance）
+bash ~/.claude/plugins/claude-investment-skills/setup.sh
+
+# 4. 跟 Claude 用大白话说话（中英文都行）
+分析一下 NVDA
+```
+
+### 选项 2 —— Git clone（想 fork + 自定义就选这个，3 分钟）
 
 ```bash
 # 1. Clone 到 Claude Code 的 skills 目录
 git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
 
-# 2. 跑 setup（建 Python venv，装 yfinance，验证 13 个 skills）
+# 2. 跑 setup（建 Python venv，装 yfinance，验证 14 个 skills）
 bash ~/.claude/skills/setup.sh
 
-# 3. 跟 Claude 用大白话说话（中英文都行）
-# 打开 Claude Code，直接说：
-分析一下 NVDA          # 不用 /analyze-stock —— 自然语言就行
+# 3. 跟 Claude 用大白话说话
+分析一下 NVDA
 ```
 
-**完事。**不需要 slash 命令，skills 自己会被自然语言触发。
+**Two-way door。** 两种装法**装出来一模一样** —— 同一份 14 个 skill、同一批 Python 脚本、同一套 Telegram alert pipeline。看你要不要 fork（选项 2）还是只用工具（选项 1）。之后想换也行 —— 卸了一个装另一个；`alerts.json` 反正在你的 GitHub fork 里。
+
+**分析 skill 不用 slash 命令**，自然语言就触发，跟装法无关。（想用 slash 命令也行 —— `/analyze-stock NVDA` 一样 work。）
 
 ---
 

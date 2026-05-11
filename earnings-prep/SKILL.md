@@ -10,7 +10,7 @@ description: Pre-earnings analysis: pulls consensus, implied move from ATM strad
 Earnings reactions are ±8-20%. That's not where to skip the discipline layers.
 
 1. **Macro regime** — trigger `macro-warning` skill first. In 🔴 RED regime, even a 20% beat can sell off (AMD 2/3/2026 beat 23%, dropped -17.31%). RED regime → recommend trim/hedge only, no adds regardless of expected reaction.
-2. **Insider 60d window** — `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py TICKER --window 60` (60d catches pre-earnings ad-hoc activity that 90d dilutes). Pre-earnings C-suite distribution = they know something. Never trust yfinance "% Net Shares" headline (RSU pollutes it). Form 4 code "P" only counts as buy.
+2. **Insider 60d window** — `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) TICKER --window 60` (60d catches pre-earnings ad-hoc activity that 90d dilutes). Pre-earnings C-suite distribution = they know something. Never trust yfinance "% Net Shares" headline (RSU pollutes it). Form 4 code "P" only counts as buy.
 3. **Position context first** — if user already holds, lead with their position size + cost basis + holding period. Generic "buy/sell" without position context is useless.
 4. **3-tier entry if recommending add** — Don't say "buy after earnings". Map T1 = post-earnings reaction level, T2 = 50DMA support, T3 = 200DMA / pre-earnings level. NEVER "buy at market" on earnings hype.
 5. **Tax for trims** — If trimming a position held < 12 months, run `tax-optimize` for STCG vs LTCG impact. STCG ~25-37% federal vs LTCG 15-20%. Often changes the recommendation (hold 30 more days → save 10%).
@@ -240,7 +240,7 @@ Based on the 4 scenarios, give SPECIFIC action:
 | Historical earnings reactions | `WebSearch`: "optionslam [ticker] earnings history" |
 | Implied move | Calculate from straddle OR `WebSearch`: "[ticker] expected move" |
 | Consensus | `WebSearch`: "[ticker] Q[X] earnings consensus" |
-| Insider pre-earnings | `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER" --window 60` (60d window catches pre-earnings ad-hoc activity; default is 90d) |
+| Insider pre-earnings | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER" --window 60` (60d window catches pre-earnings ad-hoc activity; default is 90d) |
 
 ## When to invoke
 

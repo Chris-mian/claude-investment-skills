@@ -137,6 +137,23 @@ Steps are designed to be copy-pasteable. If a command fails, jump to the matchin
 
 **Goal**: user can ask Claude Code "analyze NVDA" / "macro warning" / "审一下我的组合" and get answers. No Telegram, no cron.
 
+Two install methods — pick one based on the user's intent:
+
+#### Option 1 — Plugin marketplace (recommended for casual users, 30 sec)
+
+```
+A1. Verify Claude Code:        claude --version
+A2. Add marketplace:           /plugin marketplace add ssurmic/claude-investment-skills
+A3. Install plugin:            /plugin install claude-investment-skills@claude-investment-skills-marketplace
+A4. Run setup:                 bash ~/.claude/plugins/claude-investment-skills/setup.sh
+A5. Install yfmcp:             claude mcp add yfmcp -- npx -y @modelcontextprotocol/yfmcp
+A6. Verify in Claude Code:     type `analyze NVDA` — expect 10-step deep-dive output
+```
+
+Files end up at `~/.claude/plugins/claude-investment-skills/`. Updates via `/plugin update`. User does NOT have a personal fork.
+
+#### Option 2 — Git clone (recommended for users who want to fork + customize, 3 min)
+
 ```
 A1. Verify Claude Code:        claude --version
 A2. Clone repo:                git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
@@ -145,10 +162,23 @@ A4. Install yfmcp:             claude mcp add yfmcp -- npx -y @modelcontextproto
 A5. Verify in Claude Code:     type `analyze NVDA` — expect 10-step deep-dive output
 ```
 
+Files end up at `~/.claude/skills/`. User forks the repo to host their own changes; updates via `git pull`. **Required for Flows B-D** — the alert pipeline needs a GitHub fork to host `alerts.json` + run GitHub Actions cron.
+
+#### Decision
+
+| User wants | Pick |
+|---|---|
+| Just analysis ("analyze NVDA", "macro warning") | Option 1 — faster |
+| Price alerts via Telegram (Flow B+) | Option 2 — needs fork |
+| To modify the toolkit | Option 2 — git workflow |
+| To stay current with no effort | Option 1 — `/plugin update` |
+
+**Both methods install the exact same 14 skills + Python scripts.** The dual-mode path resolution in SKILL.md (`$(ls ~/.claude/{skills,plugins/claude-investment-skills}/...)`) means every command works under either install. No code lock-in either way — switch methods anytime.
+
 **Stop conditions**:
 - A1 fails → guide user to https://docs.claude.com/claude-code/install
-- A2 fails because `~/.claude/skills` already has content → stop and ask user: "Overwrite, merge, or use a different path?"
-- A5 returns generic text (not a 10-step format) → skills didn't load. Check `ls ~/.claude/skills/analyze-stock/SKILL.md`.
+- Option 2 A2 fails because `~/.claude/skills` already has content → stop and ask user: "Overwrite, merge, or use a different path?"
+- A5/A6 returns generic text (not a 10-step format) → skills didn't load. Check both possible install paths: `ls ~/.claude/{skills,plugins/claude-investment-skills}/analyze-stock/SKILL.md 2>/dev/null`. If neither found, re-do A2.
 
 ### Flow B — Price alerts via GitHub Actions polling
 

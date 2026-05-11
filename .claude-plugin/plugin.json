@@ -1,0 +1,15 @@
+{
+  "name": "claude-investment-skills",
+  "version": "1.7.0",
+  "description": "14 investment skills with pre-flight methodology + Telegram alert pipeline + optional Cloudflare Worker webhook. Bilingual EN/CN.",
+  "author": {
+    "name": "ssurmic",
+    "url": "https://github.com/ssurmic"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ssurmic/claude-investment-skills",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ssurmic/claude-investment-skills.git"
+  }
+}

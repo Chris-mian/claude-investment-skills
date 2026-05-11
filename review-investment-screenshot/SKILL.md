@@ -223,7 +223,7 @@ Even worse: news articles routinely conflate quarterly board-comp DSU grants ($0
 
 **Step 1 — Run the v3 script (defaults to openinsider, --window 90):**
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER1,TICKER2" --window 90
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER1,TICKER2" --window 90
 ```
 Optional `--source both` for cross-verification on high-stakes calls.
 
@@ -252,7 +252,7 @@ yfinance's "Text" field does NOT distinguish scheduled vs ad-hoc. If sells come 
 When user (or news) mentions a "cluster buy" — verify before believing.
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/cluster_buy_scan.py --days 30 --min-value 500000 --min-insiders 3 --detail --enrich
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/cluster_buy_scan.py 2>/dev/null | head -1) --days 30 --min-value 500000 --min-insiders 3 --detail --enrich
 ```
 
 This hits openinsider.com/latest-cluster-buys directly and only counts code "P" (real purchases). Filters out RSU/DSU/grants automatically.
@@ -305,11 +305,11 @@ Before finalizing the review, verify the output answers:
 
 | Task | Script | Usage |
 |------|--------|-------|
-| Live quote + MAs + earnings | `quote_pull.py` | `uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/quote_pull.py "AAPL,MSFT,..."` |
-| **Insider buy-vs-sell strict ratio** (v3, openinsider primary) | **`insider_ratio.py`** | `uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER" --window 90` — **MANDATORY** for any insider question. `--source both` for high-stakes cross-verification. |
-| **Cluster-buy hunter** (openinsider /latest-cluster-buys) | **`cluster_buy_scan.py`** | `uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/cluster_buy_scan.py --days 30 --min-value 500000 --min-insiders 3 --detail --enrich` — finds market-wide MRVL/CEVA-style cluster buys |
-| Option walls / gamma map | `option_walls.py` | `uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/option_walls.py TICKER [n_expiries]` |
-| Max pain | `max_pain.py` | `uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/max_pain.py TICKER` |
+| Live quote + MAs + earnings | `quote_pull.py` | `uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/quote_pull.py 2>/dev/null | head -1) "AAPL,MSFT,..."` |
+| **Insider buy-vs-sell strict ratio** (v3, openinsider primary) | **`insider_ratio.py`** | `uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER" --window 90` — **MANDATORY** for any insider question. `--source both` for high-stakes cross-verification. |
+| **Cluster-buy hunter** (openinsider /latest-cluster-buys) | **`cluster_buy_scan.py`** | `uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/cluster_buy_scan.py 2>/dev/null | head -1) --days 30 --min-value 500000 --min-insiders 3 --detail --enrich` — finds market-wide MRVL/CEVA-style cluster buys |
+| Option walls / gamma map | `option_walls.py` | `uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1) TICKER [n_expiries]` |
+| Max pain | `max_pain.py` | `uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1) TICKER` |
 
 Other tools:
 - **`mcp__yfmcp__*`** when available (faster than scripts; use when loaded)

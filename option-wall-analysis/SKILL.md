@@ -40,7 +40,7 @@ A strike with **massive OI** (e.g., 50,000+ contracts). At this strike:
 
 ### Step 1 — Run max_pain.py
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/max_pain.py TICKER 4
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1) TICKER 4
 ```
 
 This gives you, for the next 4 expiries:
@@ -52,7 +52,7 @@ This gives you, for the next 4 expiries:
 
 ### Step 2 — Run option_walls.py for gamma map
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/option_walls.py TICKER 4
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1) TICKER 4
 ```
 
 Gives top 10 OI strikes for both calls and puts per expiry. **Wider view** than max_pain.
@@ -189,8 +189,8 @@ Gives top 10 OI strikes for both calls and puts per expiry. **Wider view** than 
 
 | Need | Tool |
 |---|---|
-| Max pain calc | `~/.claude/skills/review-investment-screenshot/scripts/max_pain.py TICKER 4` |
-| Top OI walls | `~/.claude/skills/review-investment-screenshot/scripts/option_walls.py TICKER 4` |
+| Max pain calc | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1) TICKER 4` |
+| Top OI walls | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1) TICKER 4` |
 | Live spot | `mcp__yfmcp__yfinance_get_ticker_info` |
 | Option chain raw | `mcp__yfmcp__yfinance_get_option_chain` |
 

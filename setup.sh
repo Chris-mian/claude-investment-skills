@@ -1,14 +1,41 @@
 #!/bin/bash
 # Investment Skills Setup Script
 # Sets up Python venv + yfinance + verifies yfmcp MCP installation
+#
 # Usage: bash setup.sh
-# Run from inside ~/.claude/skills/ directory or after cloning the repo
+#
+# Works for both installation modes:
+#   - Git clone:  ~/.claude/skills/             (manual install)
+#   - Plugin:     ~/.claude/plugins/claude-investment-skills/   (via /plugin marketplace)
+# The script auto-detects which mode you're in.
 
 set -e
 
 echo "═══════════════════════════════════════════════════════════"
 echo "  Claude Investment Skills - Setup Script"
 echo "═══════════════════════════════════════════════════════════"
+echo ""
+
+# ─────────────────────────────────────────────────────────────
+# Step 0: Detect install mode
+# ─────────────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+case "$SCRIPT_DIR" in
+  *"/.claude/skills"*)
+    INSTALL_MODE="git-clone"
+    INSTALL_PATH="$HOME/.claude/skills"
+    ;;
+  *"/.claude/plugins/claude-investment-skills"*)
+    INSTALL_MODE="plugin"
+    INSTALL_PATH="$HOME/.claude/plugins/claude-investment-skills"
+    ;;
+  *)
+    INSTALL_MODE="custom"
+    INSTALL_PATH="$SCRIPT_DIR"
+    ;;
+esac
+echo "  Install mode:  $INSTALL_MODE"
+echo "  Install path:  $INSTALL_PATH"
 echo ""
 
 # Color codes for output

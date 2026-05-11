@@ -171,10 +171,10 @@ Score each layer 0 (worst), 1 (caution), 2 (good). Sum gives composite:
 
 ```bash
 # Full scan (~30s, includes breadth computation)
-/tmp/.insider_venv/bin/python ~/.claude/skills/macro-warning/scripts/macro_pull.py
+/tmp/.insider_venv/bin/python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/macro-warning/scripts/macro_pull.py 2>/dev/null | head -1)
 
 # Fast scan (~5s, skip breadth)
-/tmp/.insider_venv/bin/python ~/.claude/skills/macro-warning/scripts/macro_pull.py --skip-breadth
+/tmp/.insider_venv/bin/python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/macro-warning/scripts/macro_pull.py 2>/dev/null | head -1) --skip-breadth
 
 # Pipe to jq for inspection
 ... macro_pull.py | jq '.scoring'

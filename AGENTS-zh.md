@@ -137,6 +137,23 @@ CLOUDFLARE WORKER（仅选项 B chat 路径 —— 替换 telegram-chat.yml）
 
 **目标**：用户在 Claude Code 里说"analyze NVDA" / "macro warning" / "审一下我的组合" 能得到答案。不用 Telegram，不用 cron。
 
+**两种装法 —— 按用户意图选一个：**
+
+#### 选项 1 —— Plugin marketplace（推荐新用户，30 秒）
+
+```
+A1. 验证 Claude Code:           claude --version
+A2. 添加 marketplace:           /plugin marketplace add ssurmic/claude-investment-skills
+A3. 装 plugin:                 /plugin install claude-investment-skills@claude-investment-skills-marketplace
+A4. 跑 setup:                  bash ~/.claude/plugins/claude-investment-skills/setup.sh
+A5. 装 yfmcp:                  claude mcp add yfmcp -- npx -y @modelcontextprotocol/yfmcp
+A6. 在 Claude Code 里验证:      输入 `analyze NVDA` —— 期望 10 步深度分析输出
+```
+
+文件落在 `~/.claude/plugins/claude-investment-skills/`。更新走 `/plugin update`。用户**没有**自己的 fork。
+
+#### 选项 2 —— Git clone（想 fork + 自定义就选这个，3 分钟）
+
 ```
 A1. 验证 Claude Code:           claude --version
 A2. Clone repo:                git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
@@ -145,10 +162,23 @@ A4. 装 yfmcp:                  claude mcp add yfmcp -- npx -y @modelcontextprot
 A5. 在 Claude Code 里验证:      输入 `analyze NVDA` —— 期望 10 步深度分析输出
 ```
 
+文件落在 `~/.claude/skills/`。用户 fork repo 自己改；更新走 `git pull`。**Flow B-D 必需** —— alert pipeline 需要 fork 来存 `alerts.json` + 跑 GitHub Actions cron。
+
+#### 怎么选
+
+| 用户想要 | 选哪个 |
+|---|---|
+| 只要分析（"analyze NVDA"、"macro warning"）| 选项 1 —— 更快 |
+| Telegram 价格 alert（Flow B+）| 选项 2 —— 必需 fork |
+| 修改工具集 | 选项 2 —— git 工作流 |
+| 自动更新不操心 | 选项 1 —— `/plugin update` |
+
+**两种装法装出来的 14 个 skill + Python 脚本完全一样**。SKILL.md 里的双模式路径解析（`$(ls ~/.claude/{skills,plugins/claude-investment-skills}/...)`）让每条命令在两种 install 下都跑得通。**没有锁定** —— 随时切换装法。
+
 **停止条件**：
 - A1 失败 → 引导到 https://docs.claude.com/claude-code/install
-- A2 失败因为 `~/.claude/skills` 已有内容 → 停下问用户："覆盖、合并、还是用别的路径？"
-- A5 返回通用文字（不是 10 步格式）→ skill 没加载。检查 `ls ~/.claude/skills/analyze-stock/SKILL.md`。
+- 选项 2 A2 失败因为 `~/.claude/skills` 已有内容 → 停下问用户："覆盖、合并、还是用别的路径？"
+- A5/A6 返回通用文字（不是 10 步格式）→ skill 没加载。检查两种 install 路径：`ls ~/.claude/{skills,plugins/claude-investment-skills}/analyze-stock/SKILL.md 2>/dev/null`。两个都找不到就重做 A2。
 
 ### Flow B —— GitHub Actions polling 的价格 alert
 

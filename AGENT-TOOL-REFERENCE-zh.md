@@ -10,6 +10,25 @@
 
 ---
 
+## 路径解析模式（先读这一段，本文档所有命令都套用此模式）
+
+本文件里所有命令都用这个模板找工具集的 install root：
+
+```bash
+$(ls ~/.claude/{skills,plugins/claude-investment-skills}/PATH/TO/SCRIPT.py 2>/dev/null | head -1)
+```
+
+这个 `$(ls ...)` 表达式在**两种安装方式**下都能正确解析：
+
+- **Git-clone 装的**：`~/.claude/skills/...` 存在 → 走这条
+- **Plugin 装的**：`~/.claude/plugins/claude-investment-skills/...` 存在 → 走这条
+
+`{skills,plugins/claude-investment-skills}` 的花括号展开成两个候选路径；`ls` 列出存在的那个（不存在的报错被 `2>/dev/null` 屏蔽）；`head -1` 取一个匹配。**罕见情况**两种 install 都存在时，`ls` 按字母排序 → `plugins/...` 胜出 —— 不要紧，两边文件内容一样。**正常用法都是单 install，谁先谁后无所谓。**
+
+把整个模板原样粘到 bash 调用里，Claude Code 会正确 expand。**不要去掉 `$(ls ...)` 那层包装** —— 它就是让同一条命令在两种安装路径下都跑得通的关键。
+
+---
+
 ## 解析算法（每条用户输入都按此处理）
 
 ```
@@ -51,7 +70,7 @@
 ### 标准命令
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER1,TICKER2,..." [flags]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER1,TICKER2,..." [flags]
 ```
 
 ### 参数说明
@@ -127,7 +146,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### 标准命令
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/cluster_buy_scan.py [flags]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/cluster_buy_scan.py 2>/dev/null | head -1) [flags]
 ```
 
 ### 参数说明
@@ -191,7 +210,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### 标准命令
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/quote_pull.py "TICKER1,TICKER2,..."
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/quote_pull.py 2>/dev/null | head -1) "TICKER1,TICKER2,..."
 ```
 
 ### 参数说明
@@ -219,7 +238,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### 标准命令
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/option_walls.py TICKER [n_expiries]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1) TICKER [n_expiries]
 ```
 
 ### 参数说明
@@ -242,7 +261,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### 标准命令
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/max_pain.py TICKER [n_expiries]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1) TICKER [n_expiries]
 ```
 
 ---

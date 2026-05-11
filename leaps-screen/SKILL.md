@@ -10,7 +10,7 @@ description: LEAPS (long-dated equity options, 1-3 years out) selection framewor
 LEAPS give 5-10x leverage. **Every methodology layer matters 5-10x more.** Required checks before recommending a strike:
 
 1. **Macro regime is non-negotiable** — trigger `macro-warning`. LEAPS in 🔴 RED regime is a wealth-destruction trade. RED → only suggest LEAPS on deep-value names at 200DMA, never momentum names. YELLOW → cap LEAPS allocation at 3% of book. GREEN → full plan.
-2. **Insider strict on the underlying** — `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py TICKER --window 90`. If C-suite is distributing while user is considering a 2-year LEAPS, that's a hard NO. Form 4 code "P" only — RSU grants look bullish in headlines but aren't open-market buys.
+2. **Insider strict on the underlying** — `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) TICKER --window 90`. If C-suite is distributing while user is considering a 2-year LEAPS, that's a hard NO. Form 4 code "P" only — RSU grants look bullish in headlines but aren't open-market buys.
 3. **3-tier entry on the UNDERLYING, mapped to LEAPS strikes** — Don't recommend "Buy Jan 2027 $1100 call at market". Map: at $current → which strike? at -20% drawdown → which deeper-ITM strike? at 200DMA → which strike? User gets 3 strikes mapped to 3 underlying levels.
 4. **Sizing 3-5% MAX per LEAPS** — and that's only if confidence ≥ 8/10. LEAPS can go to $0; size accordingly.
 5. **Tax-aware exit** — LEAPS held > 1 year = LTCG. If user wants to exit within 12 months, mention STCG hit and quantify it. May be worth holding 30 more days.

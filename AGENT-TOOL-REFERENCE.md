@@ -8,6 +8,25 @@
 
 ---
 
+## Path-resolution pattern (read this once; applies to every command in this doc)
+
+Every command in this file uses this template to find the toolkit's install root:
+
+```bash
+$(ls ~/.claude/{skills,plugins/claude-investment-skills}/PATH/TO/SCRIPT.py 2>/dev/null | head -1)
+```
+
+That `$(ls ...)` expression resolves correctly for **both** installation modes:
+
+- **Git-clone install** — `~/.claude/skills/...` exists → that path is used
+- **Plugin install** — `~/.claude/plugins/claude-investment-skills/...` exists → that path is used
+
+The brace `{skills,plugins/claude-investment-skills}` expands to two candidate paths; `ls` lists whichever exist (stderr suppressed on the missing one); `head -1` picks one match. In the (rare) case both installs are present, `ls` sorts alphabetically so `plugins/...` wins — that's fine because the file content is identical in both locations. **In normal usage you have one install at a time and precedence doesn't matter.**
+
+When you paste the full template verbatim into a bash invocation, Claude Code expands it correctly. **Don't strip the `$(ls ...)` wrapper** — it's what makes the same command work no matter which install path the user chose.
+
+---
+
 ## Resolution algorithm (use this for every user utterance)
 
 ```
@@ -70,7 +89,7 @@ Detailed triggers + entry rules for the NL skills are in the [**Skill Catalog**]
 ### Canonical command
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER1,TICKER2,..." [flags]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER1,TICKER2,..." [flags]
 ```
 
 ### Parameters
@@ -146,7 +165,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### Canonical command
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/cluster_buy_scan.py [flags]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/cluster_buy_scan.py 2>/dev/null | head -1) [flags]
 ```
 
 ### Parameters
@@ -210,7 +229,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### Canonical command
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/quote_pull.py "TICKER1,TICKER2,..."
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/quote_pull.py 2>/dev/null | head -1) "TICKER1,TICKER2,..."
 ```
 
 ### Parameters
@@ -238,7 +257,7 @@ Just comma-separated tickers, no flags. Always uppercase.
 ### Canonical command
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/option_walls.py TICKER [n_expiries]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1) TICKER [n_expiries]
 ```
 
 ### Parameters
@@ -261,7 +280,7 @@ uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scri
 ### Canonical command
 
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/max_pain.py TICKER [n_expiries]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1) TICKER [n_expiries]
 ```
 
 ---
@@ -385,14 +404,14 @@ Adds/lists/cancels parameterized price alerts. Backed by GitHub Actions cron sca
 
 ```bash
 # Add
-uv run --with yfinance python ~/.claude/skills/price-alert/scripts/add_alert.py TICKER OP VALUE [--note "..."]
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/scripts/add_alert.py 2>/dev/null | head -1) TICKER OP VALUE [--note "..."]
 #  OP = below | above | drop | rise | drop_intraday | rise_intraday | below_ma_50 | above_ma_50 | below_ma_200 | above_ma_200
 
 # List
-python ~/.claude/skills/price-alert/scripts/list_alerts.py [--active | --all | --fired]
+python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/scripts/list_alerts.py 2>/dev/null | head -1) [--active | --all | --fired]
 
 # Cancel
-python ~/.claude/skills/price-alert/scripts/cancel_alert.py TARGET [--rearm]
+python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/scripts/cancel_alert.py 2>/dev/null | head -1) TARGET [--rearm]
 # TARGET = ticker, alert id, or "ALL"
 ```
 

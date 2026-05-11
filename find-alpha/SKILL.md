@@ -96,13 +96,13 @@ See [README's Hard Rules](../README.md#%EF%B8%8F-hard-rules-never-violate) for t
 
 1. **Start with cluster-buy discovery** — fast pass to surface market-wide candidates:
    ```bash
-   uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/cluster_buy_scan.py --days 30 --min-value 500000 --min-insiders 2 --detail --enrich
+   uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/cluster_buy_scan.py 2>/dev/null | head -1) --days 30 --min-value 500000 --min-insiders 2 --detail --enrich
    ```
 2. **Run the 3 scripts in parallel:**
    ```bash
-   uv run --with yfinance python ~/.claude/skills/find-alpha/scripts/swing_scan.py &
-   uv run --with yfinance python ~/.claude/skills/find-alpha/scripts/position_scan.py &
-   uv run --with yfinance python ~/.claude/skills/find-alpha/scripts/leaps_scan.py &
+   uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/find-alpha/scripts/swing_scan.py 2>/dev/null | head -1) &
+   uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/find-alpha/scripts/position_scan.py 2>/dev/null | head -1) &
+   uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/find-alpha/scripts/leaps_scan.py 2>/dev/null | head -1) &
    wait
    ```
 3. For each finalist (top 5 from each script), **call `insider_ratio.py --window 90` to verify** (uses openinsider primary).
@@ -148,14 +148,14 @@ Where T1=trigger, T2=50DMA or -20%, T3=200DMA or -38%. ⚠️ STCG warning: 1-3 
 
 | Task | Script |
 |------|--------|
-| **Market-wide cluster-buy discovery** | `~/.claude/skills/review-investment-screenshot/scripts/cluster_buy_scan.py --days 30 --min-value 500000 --min-insiders 2 --detail --enrich` (always run first) |
-| 1-3 week swing alpha scan | `~/.claude/skills/find-alpha/scripts/swing_scan.py` |
-| 1-3 month position alpha scan | `~/.claude/skills/find-alpha/scripts/position_scan.py` |
-| LEAPS alpha scan | `~/.claude/skills/find-alpha/scripts/leaps_scan.py` |
-| **Verify candidate insider strict** (openinsider primary) | `~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER" --window 90` (mandatory cross-check). Add `--source both` for high-stakes calls. |
-| Live quote/MAs | `~/.claude/skills/review-investment-screenshot/scripts/quote_pull.py` |
-| Option walls | `~/.claude/skills/review-investment-screenshot/scripts/option_walls.py` |
-| Max pain | `~/.claude/skills/review-investment-screenshot/scripts/max_pain.py` |
+| **Market-wide cluster-buy discovery** | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/cluster_buy_scan.py 2>/dev/null | head -1) --days 30 --min-value 500000 --min-insiders 2 --detail --enrich` (always run first) |
+| 1-3 week swing alpha scan | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/find-alpha/scripts/swing_scan.py 2>/dev/null | head -1)` |
+| 1-3 month position alpha scan | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/find-alpha/scripts/position_scan.py 2>/dev/null | head -1)` |
+| LEAPS alpha scan | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/find-alpha/scripts/leaps_scan.py 2>/dev/null | head -1)` |
+| **Verify candidate insider strict** (openinsider primary) | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER" --window 90` (mandatory cross-check). Add `--source both` for high-stakes calls. |
+| Live quote/MAs | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/quote_pull.py 2>/dev/null | head -1)` |
+| Option walls | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/option_walls.py 2>/dev/null | head -1)` |
+| Max pain | `$(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/max_pain.py 2>/dev/null | head -1)` |
 
 ---
 

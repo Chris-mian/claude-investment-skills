@@ -75,7 +75,7 @@ For each candidate, pull via `mcp__yfmcp__yfinance_get_ticker_info`:
 
 For each surviving candidate, run with **--window 90** (recent activity only):
 ```bash
-uv run --with yfinance python ~/.claude/skills/review-investment-screenshot/scripts/insider_ratio.py "TICKER1,TICKER2,..." --window 90
+uv run --with yfinance python $(ls ~/.claude/{skills,plugins/claude-investment-skills}/review-investment-screenshot/scripts/insider_ratio.py 2>/dev/null | head -1) "TICKER1,TICKER2,..." --window 90
 ```
 
 The script uses openinsider.com as primary source (Form 4 codes; only `P` = real purchase counts). For high-stakes calls, use `--source both` to cross-verify against yfinance.

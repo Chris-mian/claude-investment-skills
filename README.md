@@ -54,23 +54,42 @@ Also useful: [`INVESTMENT-WORKFLOW.md`](./INVESTMENT-WORKFLOW.md) (which skill t
 
 ---
 
-## ⚡ Quick Start (3 minutes)
+## ⚡ Quick Start — pick ONE install method
 
 **Prerequisites:** macOS or Linux, Python 3.9+, [Claude Code](https://docs.claude.com/claude-code/install) installed.
+
+### Option 1 — Plugin marketplace (recommended for new users, 30 seconds)
+
+```bash
+# 1. Add the marketplace to Claude Code
+/plugin marketplace add ssurmic/claude-investment-skills
+
+# 2. Install the plugin
+/plugin install claude-investment-skills@claude-investment-skills-marketplace
+
+# 3. Run setup (creates Python venv, installs yfinance)
+bash ~/.claude/plugins/claude-investment-skills/setup.sh
+
+# 4. Talk to Claude in plain English (or Chinese)
+analyze NVDA          # natural language works
+```
+
+### Option 2 — Git clone (recommended if you want to fork + customize, 3 minutes)
 
 ```bash
 # 1. Clone to where Claude Code looks for skills
 git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
 
-# 2. Run setup (creates Python venv, installs yfinance, verifies all 13 skills)
+# 2. Run setup (creates Python venv, installs yfinance, verifies all 14 skills)
 bash ~/.claude/skills/setup.sh
 
 # 3. Talk to Claude in plain English (or Chinese)
-# Open Claude Code, then just type:
-analyze NVDA          # not /analyze-stock — natural language works
+analyze NVDA
 ```
 
-**That's it.** No slash commands needed. Skills trigger from natural language.
+**Two-way door.** Both methods install the exact same 14 skills, the same Python scripts, the same Telegram alert pipeline. Pick based on whether you want to fork the repo (Option 2) or just use the tool (Option 1). You can switch later — uninstall one, install the other; `alerts.json` lives in your GitHub fork either way.
+
+**No slash commands needed for analysis skills.** They trigger from natural language regardless of install method. (Slash commands are still available if you prefer — `/analyze-stock NVDA` works too.)
 
 ---
 
