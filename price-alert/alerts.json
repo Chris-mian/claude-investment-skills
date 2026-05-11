@@ -37,7 +37,7 @@
       "note": "\u4ef7\u683c\u8dcc\u81f3 $190",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
-      "active": true,
+      "active": false,
       "fired": false
     },
     {
@@ -50,7 +50,7 @@
       "note": "\u5355\u65e5\u8dcc\u5e45\u8fbe 3%\uff08\u542b\u76d8\u540e\uff09",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
-      "active": true,
+      "active": false,
       "fired": false
     },
     {
