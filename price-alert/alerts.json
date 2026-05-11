@@ -130,6 +130,18 @@
       "created_price": 13.664999961853027,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "orcl-above_ma_200-30d3b2",
+      "ticker": "ORCL",
+      "condition": {
+        "op": "above_ma_200"
+      },
+      "note": "ORCL trend-turn \u4fe1\u53f7 \u2014 200DMA $211 \u7a81\u7834\uff08\u91cd\u65b0\u8bc4\u4f30\uff09",
+      "created": "2026-05-11",
+      "created_price": 193.52999877929688,
+      "active": true,
+      "fired": false
     }
   ]
 }
