@@ -7,7 +7,7 @@
         "op": "below",
         "threshold": 190
       },
-      "note": "ORCL 跌破 $190",
+      "note": "ORCL \u8dcc\u7834 $190",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": true,
@@ -19,9 +19,9 @@
       "condition": {
         "op": "drop_intraday",
         "pct": 3,
-        "prev_close_at_check": 194.59
+        "prev_close_at_check": 195.94
       },
-      "note": "ORCL 单日跌幅超过 3%（含盘后）",
+      "note": "ORCL \u5355\u65e5\u8dcc\u5e45\u8d85\u8fc7 3%\uff08\u542b\u76d8\u540e\uff09",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": true,
@@ -34,7 +34,7 @@
         "op": "below",
         "threshold": 190
       },
-      "note": "价格跌至 $190",
+      "note": "\u4ef7\u683c\u8dcc\u81f3 $190",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": false,
@@ -47,7 +47,7 @@
         "op": "drop_intraday",
         "pct": 3
       },
-      "note": "单日跌幅达 3%（含盘后）",
+      "note": "\u5355\u65e5\u8dcc\u5e45\u8fbe 3%\uff08\u542b\u76d8\u540e\uff09",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": false,
@@ -83,7 +83,8 @@
       "ticker": "ORCL",
       "condition": {
         "op": "rise_intraday",
-        "pct": 2
+        "pct": 2,
+        "prev_close_at_check": 195.94
       },
       "note": "Set via Telegram bot",
       "created": "2026-05-11",
@@ -100,7 +101,10 @@
       "note": "Set via Telegram bot",
       "created": "2026-05-11",
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-11T13:41:06.103846+00:00",
+      "fired_at_price": 192.0,
+      "fired_reason": "$192.00 \u2264 $192.00"
     }
   ]
 }
