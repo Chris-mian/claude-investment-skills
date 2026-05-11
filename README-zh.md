@@ -8,13 +8,12 @@
 
 ## 🤖 给 AI agent / CLI 用户
 
-如果你是 AI agent（Claude Code、自定义 agent、定时器）或在做 CLI 包装，**先读 [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md)**。架构决策（为什么用 yfinance MCP + 直接 HTTP API + openinsider，而不是 3-MCP 全套）记录在 [`ARCHITECTURE.md`](./ARCHITECTURE.md)。它包含：
-- 每个工具的中英文自然语言触发短语
-- 精确的 CLI 模板和参数说明
-- 用户话术 → 命令的映射例子
-- 多工具组合调用的 pattern
+两个入口，看 agent 处于**哪个阶段**：
 
-`INVESTMENT-WORKFLOW.md` 告诉你**用哪个 skill**。`AGENT-TOOL-REFERENCE.md` 告诉你**精确怎么调用脚本**。
+- **Setup 阶段**（用户刚粘了 repo URL 让你帮装/配）→ 读 [`AGENTS.md`](./AGENTS.md)（中文版 [`AGENTS-zh.md`](./AGENTS-zh.md)）。包含 PREP 问卷、flow 识别、一步步安装、gotchas（PAT 权限、webhook SSL 等）、交接规则。Claude Code / Codex / Cursor / 自定义 agent 通用 —— `CLAUDE.md` 是个 alias。
+- **Runtime 阶段**（skill 已装好，用户在问投资问题）→ 读 [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md)。包含中英 NL 触发、精确 CLI 模板、参数说明、多工具组合 pattern。
+
+也有用：[`INVESTMENT-WORKFLOW.md`](./INVESTMENT-WORKFLOW.md)（投资问题该选哪个 skill）、[`ARCHITECTURE.md`](./ARCHITECTURE.md)（为什么数据 plumbing 长这样 —— yfinance MCP + 直接 HTTP API + openinsider，而不是 3-MCP 全套）。
 
 ---
 

@@ -8,13 +8,12 @@
 
 ## 🤖 For AI agents / CLI users
 
-If you're an AI agent (Claude Code, custom agent, scheduler) or building a CLI wrapper, **read [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md) first**. It contains:
-- Natural-language triggers in EN + CN for every tool
-- Exact CLI templates with parameter specs
-- Example utterance → command mappings
-- Multi-tool composite patterns
+Two entry points, depending on **what phase** the agent is in:
 
-`INVESTMENT-WORKFLOW.md` tells you *which skill* to pick. `AGENT-TOOL-REFERENCE.md` tells you *exactly how to invoke its scripts*. `ARCHITECTURE.md` explains *why* the data plumbing looks the way it does (yfinance MCP + direct HTTP APIs + openinsider — not a 3-MCP stack).
+- **Setup phase** (user just pasted this URL and wants you to install/configure things) → read [`AGENTS.md`](./AGENTS.md). It contains PREP questionnaire, flow detection, step-by-step install, gotchas (PAT scope, webhook SSL, etc.), and handoff rules. Works for Claude Code, Codex, Cursor, custom agents — `CLAUDE.md` is a thin alias.
+- **Runtime phase** (skills are installed, user is asking investment questions) → read [`AGENT-TOOL-REFERENCE.md`](./AGENT-TOOL-REFERENCE.md). It contains NL triggers in EN + CN, exact CLI templates, parameter specs, and multi-tool composite patterns.
+
+Also useful: [`INVESTMENT-WORKFLOW.md`](./INVESTMENT-WORKFLOW.md) (which skill to pick for an investment question) and [`ARCHITECTURE.md`](./ARCHITECTURE.md) (why the data plumbing looks the way it does — yfinance MCP + direct HTTP APIs + openinsider, not a 3-MCP stack).
 
 ---
 
