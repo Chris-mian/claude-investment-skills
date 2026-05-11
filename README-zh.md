@@ -6,6 +6,43 @@
 
 [English Version](./README.md) · [5 分钟介绍](./INTRODUCTION-zh.md) · [English intro](./INTRODUCTION.md)
 
+## 🎯 适用人群（以及不适用的）
+
+这是一个**研究级别的投资思考伙伴**，不是交易 bot。
+
+### 设计给
+
+- 🏦 **个人 / 个人理财投资者**（taxable 账户、IRA / 401k、家庭账户）
+- 📚 **Buy-side 主观交易** —— 不是 market maker、不是算法 / HFT 公司
+- 📉 **左侧布局**风格：弱势分批建仓、看估值
+- 📈 **右侧反转**风格：恐慌后确认入场（ORCL 模式）
+- 🕒 **Swing（1-3 周）/ Position（1-3 月）/ LEAPS（6-24 月）** 时间框架
+- 🌐 **美股 + ETF + 期权**（FX / 加密货币 / 国际市场在路线图上 —— 见 [NEXT-STEPS-zh.md](./NEXT-STEPS-zh.md)）
+
+### 不适合
+
+- ⚡ **高频交易（HFT）** —— 本文定义：**同一资产类型每日交易 >5 次**。2 分钟 cron + 1-3 秒 webhook 的延迟对这类策略太粗
+- 🤖 **算法 / 做市**策略：需要毫秒级延迟
+- 💱 外汇 / 加密货币 / 非美股（目前 —— yfinance 覆盖不稳定；在路线图）
+- 📊 **纯量化回测** —— 本框架是 live data + 主观决策；不做信号回测
+- 🎯 **日内交易** —— 2 分钟粒度对 scalping 太粗；用真正的 broker alert
+- 🏢 **B2B / 托管 SaaS** —— 没有 hosted tier。每个用户都在自己的 fork 上自托管。
+
+### 延迟预期（实话实说，能做到啥不能做到啥）
+
+| 层 | 延迟 | 适合 |
+|---|---|---|
+| 价格扫描（alert 触发）| 2 分钟 cron | 研究级触发（"GLW 回到 tier-1 时提醒"）|
+| Chat 路径 A（GH Actions polling）| 2-15 分钟回复 | 跟 bot 偶尔聊聊 |
+| Chat 路径 B（Cloudflare webhook）| 1-3 秒回复 | 跟 bot 主动对话 |
+| End-to-end `macro-warning` 全扫描 | 30-60 秒 | 每日盘前 regime 读 |
+
+**这些延迟对 HFT 来说都属于慢**。如果你要 sub-100ms 响应，这不是合适的工具。如果你每只票每日交易 < 5 次、关心基本面 thesis 是否对，就是合适的。
+
+未来功能（EMA、RSI、成交量 alert、更多通知 channel、FX/加密货币、实时 WebSocket 选项）见 [`NEXT-STEPS-zh.md`](./NEXT-STEPS-zh.md)。
+
+---
+
 ## 🤖 给 AI agent / CLI 用户
 
 两个入口，看 agent 处于**哪个阶段**：

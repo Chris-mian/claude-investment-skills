@@ -6,6 +6,43 @@
 
 [中文版本 / Chinese Version](./README-zh.md) · [5-min Introduction](./INTRODUCTION.md) · [中文介绍](./INTRODUCTION-zh.md)
 
+## 🎯 Who this is for (and who it's NOT for)
+
+This is a **research-grade investment thinking partner**, not a trading bot.
+
+### Designed for
+
+- 🏦 **Individual / personal-finance investors** (taxable account, IRA / 401k, family money)
+- 📚 **Buy-side discretionary traders** — not market-makers, not algo / HFT firms
+- 📉 **Left-side accumulation** style: buying weakness with tier-laddered entries, valuation-aware
+- 📈 **Right-side reversal** style: capitulation-then-confirmation entries (the ORCL pattern)
+- 🕒 **Swing (1-3 weeks) / Position (1-3 months) / LEAPS (6-24 months)** horizons
+- 🌐 **US-listed equities + ETFs + options** (FX / crypto / international on roadmap — see [NEXT-STEPS.md](./NEXT-STEPS.md))
+
+### NOT for
+
+- ⚡ **High-frequency trading** — defined here as **>5 trades/day in any single asset type**. The 2-min cron + 1-3 sec webhook latencies are too coarse.
+- 🤖 **Algorithmic / market-making** strategies that need millisecond execution
+- 💱 FX / crypto / non-US listings (currently — yfinance coverage too inconsistent; on roadmap)
+- 📊 **Pure quantitative backtesting** — the framework is live-data + discretionary, not signal-backtested
+- 🎯 **Day-trading** — 2-min granularity is too coarse for scalping; use a real broker alert
+- 🏢 **B2B / managed SaaS** — there is no hosted tier. Everyone self-hosts on their own fork.
+
+### Latency expectations (be honest about what this can and can't do)
+
+| Layer | Latency | Suitable for |
+|---|---|---|
+| Price scanner (alerts fire) | 2-min cron | Research triggers ("alert when GLW comes back to tier-1") |
+| Chat path A (GH Actions polling) | 2-15 min response | Casual NL chat with bot |
+| Chat path B (Cloudflare webhook) | 1-3 sec response | Active conversation with bot |
+| End-to-end `macro-warning` full scan | 30-60 sec | Daily pre-market regime read |
+
+**None of these are low-latency by HFT standards.** If you need sub-100ms, this is the wrong tool. If you trade < 5x/day per ticker and care about getting your fundamental thesis right, you're in the right place.
+
+For planned features (EMA, RSI, volume alerts, additional notification channels, FX/crypto, real-time WebSocket option), see [`NEXT-STEPS.md`](./NEXT-STEPS.md).
+
+---
+
 ## 🤖 For AI agents / CLI users
 
 Two entry points, depending on **what phase** the agent is in:
