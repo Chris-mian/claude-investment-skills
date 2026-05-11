@@ -89,6 +89,18 @@
       "created": "2026-05-11",
       "active": true,
       "fired": false
+    },
+    {
+      "id": "orcl-below-jo113x",
+      "ticker": "ORCL",
+      "condition": {
+        "op": "below",
+        "threshold": 192
+      },
+      "note": "Set via Telegram bot",
+      "created": "2026-05-11",
+      "active": true,
+      "fired": false
     }
   ]
 }
