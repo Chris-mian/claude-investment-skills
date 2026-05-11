@@ -1,0 +1,57 @@
+name: Telegram NL Chat Handler
+
+# Polls Telegram every 5 minutes for new messages, sends each to Claude
+# (Anthropic API) with tool definitions, executes the chosen tool (add/
+# list/cancel alert), and replies via Telegram.
+#
+# Why 5 min not 2: GitHub Actions cron minimum granularity is effectively
+# 5 min (advertised lower values are not reliable on free tier).
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 min, 24/7 (chat can happen any time)
+  workflow_dispatch:        # manual trigger for testing
+
+permissions:
+  contents: write           # commits alerts.json + tg_state.json after each run
+
+# Prevent concurrent runs from racing on tg_state.json updates
+concurrency:
+  group: telegram-chat
+  cancel-in-progress: false
+
+jobs:
+  chat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet anthropic requests yfinance
+
+      - name: Run chat handler
+        run: python price-alert/scripts/chat_handler.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          ANTHROPIC_API_KEY:  ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Commit any state/alert changes
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name  "GitHub Actions"
+          if git diff --quiet price-alert/alerts.json price-alert/tg_state.json 2>/dev/null; then
+            echo "No state changes to commit"
+          else
+            git add price-alert/alerts.json price-alert/tg_state.json 2>/dev/null || true
+            git commit -m "💬 Telegram chat update $(date -u +'%Y-%m-%d %H:%M UTC')" || true
+            git push || true
+          fi

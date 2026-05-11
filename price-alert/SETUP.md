@@ -242,6 +242,80 @@ git push
 
 ---
 
+## Part 3.5 — Optional: Enable bidirectional NL chat with the bot (Anthropic API)
+
+This is **optional**. The default `price-alerts.yml` workflow gives one-way push notifications (price triggers → Telegram). If you want **two-way natural-language conversation** with your bot — text it in plain English/Chinese, it parses + executes via Claude — enable the `telegram-chat.yml` workflow.
+
+### What it enables
+
+```
+You text Telegram bot: "alert me when GLW hits $140"
+Bot replies:           "✅ Alert added: GLW ≤ $140"
+
+You: "what alerts do I have?"
+Bot: "📋 GLW ≤ $140, NVDA -10% from $1142"
+
+You: "cancel GLW"
+Bot: "✅ Cancelled glw-below-xxx"
+```
+
+### How it works
+
+A separate GitHub Actions workflow (`telegram-chat.yml`) polls Telegram every 5 minutes. For each new message, it calls Anthropic Claude API with tool definitions; Claude decides which tool to invoke (`add_alert`/`list_alerts`/`cancel_alert`) and the bot replies with the result.
+
+### Cost
+
+~$1-2/month for casual use (~50 messages/day at Claude Sonnet 4.6 rates: $3 per million input tokens, $15 per million output). Heavy use (200+ messages/day) might run $5-10/month.
+
+### Setup steps
+
+**1. Get an Anthropic API key**
+
+- Go to https://console.anthropic.com/settings/keys
+- Sign in (or sign up — separate account from claude.ai)
+- Click **Create Key** → name it (e.g. "price-alert-bot")
+- Copy the key (starts with `sk-ant-api03-...`)
+- ⚠️ You'll see the key ONCE — copy now or you have to regenerate
+
+**2. Add billing**
+
+Anthropic requires a payment method. Min $5 credit purchase. Go to **Billing** → **Buy credits** → $5 is plenty for months.
+
+**3. Add to local `.env`**
+
+```bash
+# Edit price-alert/.env, add a third line:
+ANTHROPIC_API_KEY=sk-ant-api03-XXXXXXXXXXXX...
+```
+
+**4. Add to GitHub Secrets**
+
+```bash
+cd ~/.claude/skills
+gh secret set --env-file price-alert/.env --repo YOUR_USERNAME/claude-investment-skills
+```
+
+This re-uploads all 3 keys from your `.env` (including the new ANTHROPIC_API_KEY). The first two stay the same — `gh secret set` is idempotent.
+
+**5. Trigger the workflow manually to test**
+
+```
+https://github.com/YOUR_USERNAME/claude-investment-skills/actions/workflows/telegram-chat.yml
+→ Run workflow → Run workflow (green button)
+```
+
+Then go to Telegram, send your bot a message like `hello`. Within 5-10 minutes (next cron tick), the bot should reply with a natural-language acknowledgment.
+
+### Security: chat_id whitelist
+
+`chat_handler.py` checks the incoming chat_id against `TELEGRAM_CHAT_ID` env var and **silently ignores any message from a different chat**. This prevents anyone else who finds your bot from using it. Only you can chat with it.
+
+### If you don't want this feature
+
+Just leave `ANTHROPIC_API_KEY=PASTE_...` in `.env` and don't enable the workflow. The default one-way price alerts (`check_alerts.py` / `price-alerts.yml`) work fine without any Anthropic key.
+
+---
+
 ## Part 4 — Add real alerts
 
 Now use the skill. Just talk to Claude:
