@@ -43,6 +43,28 @@ ALERTS_JSON = Path(os.environ.get("ALERTS_JSON_PATH", SKILL_DIR / "alerts.json")
 FIRED_LOG   = SKILL_DIR / "alerts_fired.log"
 
 
+# ─── .env loader (zero-dependency, only for local runs) ──────────────────
+# GitHub Actions injects secrets via repo Settings, not via .env.
+# For local testing, we read price-alert/.env if it exists.
+def _load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if value and value != f"PASTE_YOUR_{key.split('_', 1)[-1]}_HERE":
+                # Don't overwrite real env vars (CI), but do fill missing ones (local)
+                os.environ.setdefault(key, value)
+
+
+_load_dotenv(SKILL_DIR / ".env")
+
+
 # ─── Telegram ───────────────────────────────────────────────────────────
 def send_telegram(message: str) -> bool:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")

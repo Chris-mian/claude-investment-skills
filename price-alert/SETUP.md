@@ -117,6 +117,47 @@ If everything's right, your phone gets a "Hello from setup" message. If you get 
 
 ---
 
+## Part 1.6 — Save credentials to your local `.env` file
+
+Before pushing anything to GitHub, save your credentials **locally** in a `.env` file that is **never committed**.
+
+```bash
+cd ~/.claude/skills/price-alert
+cp .env.example .env
+# Open .env in your editor (nano, vim, VSCode, etc.) and paste:
+#   TELEGRAM_BOT_TOKEN=<your real token>
+#   TELEGRAM_CHAT_ID=<your real chat_id>
+```
+
+The repo's `.gitignore` already excludes `.env` — `git status` will NOT show it. **Verify before any commit**:
+
+```bash
+git -C ~/.claude/skills status --short | grep -i "\.env"
+# Expected output: nothing (or only .env.example which is safe to commit)
+```
+
+If you accidentally see `.env` listed as a tracked or staged file, **STOP** and remove it from staging.
+
+### Why .env exists if GitHub Actions doesn't read it
+
+| Use case | Where credentials come from |
+|---|---|
+| **Local testing** (`python check_alerts.py` on your laptop) | reads `.env` automatically |
+| **GitHub Actions cron** (the actual production path) | reads from repo Secrets (set in Part 2) |
+
+`.env` is purely for **your machine** — testing scripts before pushing alerts to the live cron.
+
+### ⚠️ If you ever leaked a token
+
+If your token appears anywhere outside `.env` (screenshot, chat, repo, paste bin, anywhere), it is compromised:
+
+1. Open @BotFather → `/mybots` → select your bot → **API Token** → **Revoke current token**
+2. BotFather gives a new token
+3. Update `.env` AND GitHub Secrets with the new value
+4. Old token instantly stops working — no further action needed
+
+---
+
 ## Part 2 — Add credentials to GitHub Secrets (2 min)
 
 GitHub Actions needs to know your token + chat_id. **Never put them in code** — use repo secrets.

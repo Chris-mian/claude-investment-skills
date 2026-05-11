@@ -30,3 +30,14 @@ venv/
 # Logs / temp
 *.log
 *.tmp
+
+# Secrets — NEVER commit these
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.json
+credentials.json
+# (price-alert/alerts.json is OK to commit — has no secrets, just alert config)
+# (.env.example is OK to commit — template with no real values)

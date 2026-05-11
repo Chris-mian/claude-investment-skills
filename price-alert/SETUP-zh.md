@@ -118,6 +118,47 @@ https://api.telegram.org/bot<TOKEN>/sendMessage?chat_id=<CHAT_ID>&text=Hello%20f
 
 ---
 
+## Part 1.6 — 把凭证存到本地 `.env`
+
+在 push 任何东西到 GitHub 之前，把凭证存到本地 `.env` 文件 —— 这个文件**永远不会被 commit**。
+
+```bash
+cd ~/.claude/skills/price-alert
+cp .env.example .env
+# 用编辑器（nano、vim、VSCode 等）打开 .env，粘贴：
+#   TELEGRAM_BOT_TOKEN=<你的真实 token>
+#   TELEGRAM_CHAT_ID=<你的真实 chat_id>
+```
+
+Repo 根目录的 `.gitignore` 已经排除了 `.env` —— `git status` 不会显示它。**任何 commit 之前确认**：
+
+```bash
+git -C ~/.claude/skills status --short | grep -i "\.env"
+# 期望输出: 没东西（或只有 .env.example，那个可以 commit）
+```
+
+如果不小心看到 `.env` 被 staged，**立刻停下**，从 staging 移除。
+
+### 既然 GitHub Actions 不读 .env，为什么还要它？
+
+| 场景 | 凭证从哪来 |
+|---|---|
+| **本地测试**（在你电脑上跑 `python check_alerts.py`） | 自动读 `.env` |
+| **GitHub Actions cron**（实际生产路径） | 读 repo Secrets（Part 2 设置） |
+
+`.env` 只是给**你电脑**用 —— push live cron 之前测试脚本用的。
+
+### ⚠️ 万一 token 泄露了
+
+如果你的 token 出现在 `.env` 之外的任何地方（截图、聊天、repo、剪贴板、任何地方），它就**已经不安全**：
+
+1. 打开 @BotFather → `/mybots` → 选你的 bot → **API Token** → **Revoke current token**
+2. BotFather 给你新 token
+3. 同时更新 `.env` 和 GitHub Secrets 的新值
+4. 旧 token 立刻失效 —— 不需要其他操作
+
+---
+
 ## Part 2 — 把凭证加到 GitHub Secrets（2 分钟）
 
 GitHub Actions 需要知道你的 token + chat_id。**绝对不能写到代码里** —— 用 repo secrets。
