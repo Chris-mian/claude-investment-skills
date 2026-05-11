@@ -58,6 +58,9 @@ The worker needs to write to `alerts.json` in your repo, so it needs a token.
    - **Expiration**: 90 days (or longer if you don't want to rotate)
    - **Repository access**: **Only select repositories** → pick `claude-investment-skills`
    - **Permissions** → **Repository permissions** → find **Contents** → set to **Read and write**
+
+   ⚠️ **The most common mistake here is leaving Contents at "Read-only"**. Read-only lets the worker `GET` alerts.json (which would work even with no token, since the repo is public) but every `PUT` (commit) returns `403 Resource not accessible by personal access token`. Double-check this dropdown shows **Read and write** before clicking Generate.
+
 3. Click **Generate token**
 4. **Copy the `github_pat_...` token immediately** — it's shown only once.
 
@@ -261,6 +264,8 @@ The error message tells you exactly which API failed:
 - `Anthropic API error: 401` → ANTHROPIC_API_KEY wrong; redo Part 3 for that secret
 - `GitHub fetch failed: 401` → GITHUB_TOKEN wrong or no Contents:write; redo Part 2 + Part 3 for that secret
 - `GitHub fetch failed: 404` → GITHUB_REPO wrong; should be `<owner>/<repo>` exactly
+- `GitHub commit failed: 403 Resource not accessible by personal access token` → **PAT scope wrong**. The `GET` succeeded (public repo doesn't need auth) but `PUT` failed because the PAT lacks **Contents: Write**. Fix: open https://github.com/settings/personal-access-tokens → click `price-alert-webhook` → Repository permissions → Contents → set to **Read and write** → Update. (Common pitfall: easy to accidentally leave it at "Read-only" — Read-only lets GET work but blocks all commits.)
+- `btoa() can only operate on characters in the Latin1 (ISO/IEC 8859-1) range` → outdated worker code. Pull the latest `worker.ts` from this repo (the current version uses `TextEncoder`/`TextDecoder` to round-trip non-ASCII chars like Chinese notes) and redeploy with `wrangler deploy`.
 - `Anthropic API error: 400 ... credit balance` → out of Anthropic credits; top up at console.anthropic.com
 
 ### Worker logs show "chat_id mismatch"

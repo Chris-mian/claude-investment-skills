@@ -58,6 +58,9 @@ Worker 需要写 `alerts.json` 回你的 repo，所以需要 token。
    - **Expiration**: 90 天（或更长免轮换）
    - **Repository access**: **Only select repositories** → 选 `claude-investment-skills`
    - **Permissions** → **Repository permissions** → 找到 **Contents** → 设为 **Read and write**
+
+   ⚠️ **最容易踩的坑：Contents 留在 "Read-only"**。Read-only 让 worker 能 `GET` alerts.json（其实 public repo 不要 token 也能 GET），但每次 `PUT`（提交）都会 `403 Resource not accessible by personal access token`。Generate 之前**再核对一遍这个下拉框确实是 "Read and write"**。
+
 3. 点 **Generate token**
 4. **立刻复制那个 `github_pat_...` token** —— 只显示一次
 
@@ -260,6 +263,8 @@ wrangler tail
 - `Anthropic API error: 401` → ANTHROPIC_API_KEY 错了；重做那个 secret
 - `GitHub fetch failed: 401` → GITHUB_TOKEN 错或没 Contents:write；重做 Part 2 + Part 3
 - `GitHub fetch failed: 404` → GITHUB_REPO 错；格式必须是 `<owner>/<repo>`
+- `GitHub commit failed: 403 Resource not accessible by personal access token` → **PAT 权限不对**。`GET`（读）成功是因为 repo 是 public 不需要 auth，但 `PUT`（提交）必须有 **Contents: Write**。修复：打开 https://github.com/settings/personal-access-tokens → 点 `price-alert-webhook` → Repository permissions → Contents → 改成 **Read and write** → 点 Update。（**最常见的坑** —— 很容易点成 "Read-only"，Read-only 能读但任何 commit 都 block 掉。）
+- `btoa() can only operate on characters in the Latin1 (ISO/IEC 8859-1) range` → worker 代码过时了。从 repo pull 最新 `worker.ts`（新版用 `TextEncoder`/`TextDecoder` 处理中文 note 等非 ASCII 字符），然后 `wrangler deploy` 重新部署。
 - `Anthropic API error: 400 ... credit balance` → Anthropic 余额没了；去 console.anthropic.com 充
 
 ### Worker logs 显示 "chat_id mismatch"

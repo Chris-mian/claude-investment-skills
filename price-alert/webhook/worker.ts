@@ -121,6 +121,22 @@ async function getCurrentPrice(ticker: string): Promise<number | null> {
 // ─── GitHub Contents API ──────────────────────────────────────────────────
 const ALERTS_PATH = "price-alert/alerts.json";
 
+// btoa/atob only handle Latin1. alerts.json may contain Chinese in `note` —
+// round-trip through TextEncoder/TextDecoder so non-ASCII survives.
+function base64EncodeUtf8(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function base64DecodeUtf8(b64: string): string {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
 async function fetchAlerts(env: Env): Promise<{ data: any; sha: string }> {
   const r = await fetch(
     `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${ALERTS_PATH}`,
@@ -134,12 +150,12 @@ async function fetchAlerts(env: Env): Promise<{ data: any; sha: string }> {
   );
   if (!r.ok) throw new Error(`GitHub fetch failed: ${r.status} ${await r.text()}`);
   const meta = (await r.json()) as any;
-  const content = atob(meta.content.replace(/\n/g, ""));
+  const content = base64DecodeUtf8(meta.content.replace(/\n/g, ""));
   return { data: JSON.parse(content), sha: meta.sha };
 }
 
 async function commitAlerts(env: Env, alertsObj: any, sha: string, message: string): Promise<void> {
-  const content = btoa(JSON.stringify(alertsObj, null, 2) + "\n");
+  const content = base64EncodeUtf8(JSON.stringify(alertsObj, null, 2) + "\n");
   const r = await fetch(
     `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${ALERTS_PATH}`,
     {
