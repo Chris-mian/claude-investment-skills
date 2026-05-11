@@ -6,6 +6,10 @@ main = "worker.ts"
 compatibility_date = "2025-04-01"
 # account_id is auto-detected from `wrangler login` — no need to hardcode.
 
+# Explicit settings to suppress deploy warnings:
+workers_dev = true       # we DO use *.workers.dev for the bot
+preview_urls = false     # don't expose Preview URLs publicly
+
 # Optional observability — keep request logs for 7 days in CF dashboard.
 [observability]
 enabled = true

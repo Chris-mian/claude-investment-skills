@@ -103,21 +103,63 @@ wrangler secret list
 
 ---
 
-## Part 4 — 部署 worker（1 分钟）
+## Part 4 — 部署 worker（首次 2-3 分钟）
 
 ```bash
 cd ~/.claude/skills/price-alert/webhook
 wrangler deploy
 ```
 
-输出长这样:
+### 第一次部署：选 workers.dev subdomain
+
+第一次跑 Cloudflare Worker 会问:
 
 ```
-✓ Successfully deployed price-alert-webhook
-  ╰─ https://price-alert-webhook.<你的-subdomain>.workers.dev
+✔ Would you like to register a workers.dev subdomain now? … yes
+✔ What would you like your workers.dev subdomain to be? …
 ```
 
-**复制这个 URL** —— 这就是你的 webhook 端点。
+这个 subdomain **每个 CF 账号一次性绑定** —— 之后所有 worker 都用这个 namespace（比如 `my-other-bot.<subdomain>.workers.dev`）。
+
+**选 subdomain 的 tips**:
+- 优先试你的 GitHub 用户名（最常见）。比如 `ssurmic`。
+- 限制: 3-63 字符，字母/数字/连字符，**不能**以连字符开头/结尾，**全球唯一**。
+- 别打单字母 `y` / `n` —— 要么被占要么报"invalid"。
+- 像 `john` / `bot` / `worker` 这种热门词都被占了。选个特别点的。
+- 选好之后**永久绑定**账号（CF dashboard 里能改，但改了所有 worker 的 URL 都会变）。
+
+注册成功后:
+
+```
+✔ Creating a workers.dev subdomain for your account at https://<sub>.workers.dev. Ok to proceed? … yes
+
+Success! It may take a few minutes for DNS records to update.
+```
+
+⚠️ **DNS 传播这个提示要注意**。有时第一次部署成功但 Telegram 1-2 分钟内还连不上 URL（SSL 握手失败）。如果 `getWebhookInfo` 显示 `"last_error_message": "SSL error..."`，等 2 分钟 Telegram 会自动重试 —— pending 的消息会排队等。
+
+### 之后的部署
+
+第一次部署后，下次跑 `wrangler deploy` 跳过 subdomain 那些，~10 秒完事。
+
+### 最终输出
+
+```
+Deployed price-alert-webhook triggers (后续部署 3-5 秒)
+  https://price-alert-webhook.<你的-subdomain>.workers.dev
+Current Version ID: ...
+```
+
+**复制这个 URL** —— 你的 webhook 端点。
+
+### 可能看到的无害警告
+
+```
+▲ [WARNING] Because 'workers_dev' is not in your Wrangler file...
+▲ [WARNING] Because your 'workers.dev' route is enabled and 'preview_urls' is not in your Wrangler file...
+```
+
+第一次部署时无害。这个 repo 的 `wrangler.toml` 现在已经显式设置了 (`workers_dev = true`, `preview_urls = false`)，复制这个文件就不会再看到。
 
 ---
 

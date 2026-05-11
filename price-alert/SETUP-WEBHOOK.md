@@ -104,21 +104,63 @@ Note: the values never appear in your terminal output; wrangler hides them.
 
 ---
 
-## Part 4 — Deploy the worker (1 min)
+## Part 4 — Deploy the worker (2-3 min on first deploy)
 
 ```bash
 cd ~/.claude/skills/price-alert/webhook
 wrangler deploy
 ```
 
-Output looks like:
+### First-time only: pick your workers.dev subdomain
+
+If this is your first Cloudflare Worker ever, you'll see:
 
 ```
-✓ Successfully deployed price-alert-webhook
-  ╰─ https://price-alert-webhook.<your-subdomain>.workers.dev
+✔ Would you like to register a workers.dev subdomain now? … yes
+✔ What would you like your workers.dev subdomain to be? …
 ```
 
-**Copy that URL** — that's your webhook endpoint. Looks like `https://price-alert-webhook.ssurmic.workers.dev` (or whatever your CF subdomain is).
+This subdomain is **one-time per Cloudflare account** — it becomes your namespace for ALL future workers (e.g. `my-other-bot.<subdomain>.workers.dev`).
+
+**Tips for picking**:
+- Try your GitHub username first (most common pattern). E.g. `ssurmic`.
+- Constraints: 3-63 chars, letters/numbers/hyphens only, NOT starting/ending with hyphen, **globally unique** across all Cloudflare Worker users.
+- Don't type single letters like `y` or `n` — they're either taken or rejected as invalid.
+- Common picks like `john`, `bot`, `worker` are all taken. Use something distinctive.
+- Once chosen, the subdomain is **permanent** for your account (you can edit it in the CF dashboard, but it changes ALL your workers' URLs).
+
+After successful registration:
+
+```
+✔ Creating a workers.dev subdomain for your account at https://<sub>.workers.dev. Ok to proceed? … yes
+
+Success! It may take a few minutes for DNS records to update.
+```
+
+⚠️ **The DNS propagation note matters**. Sometimes the very first deploy succeeds but Telegram can't reach the URL for 1-2 minutes (SSL handshake fails). If `getWebhookInfo` shows `"last_error_message": "SSL error..."`, wait 2 min and Telegram will auto-retry — pending messages are queued.
+
+### Subsequent deploys
+
+After the first deploy, future runs of `wrangler deploy` skip all the subdomain stuff and finish in ~10 sec.
+
+### Final output
+
+```
+Deployed price-alert-webhook triggers (3-5 sec on subsequent deploys)
+  https://price-alert-webhook.<your-subdomain>.workers.dev
+Current Version ID: ...
+```
+
+**Copy that URL** — that's your webhook endpoint.
+
+### Benign warnings you may see
+
+```
+▲ [WARNING] Because 'workers_dev' is not in your Wrangler file...
+▲ [WARNING] Because your 'workers.dev' route is enabled and 'preview_urls' is not in your Wrangler file...
+```
+
+These are harmless on first deploy. The `wrangler.toml` in this repo now sets both explicitly (`workers_dev = true`, `preview_urls = false`) to suppress them. If you copied this repo's `wrangler.toml`, you won't see them.
 
 ---
 
