@@ -186,6 +186,84 @@ bash ~/.claude/skills/setup.sh
 
 ---
 
+## 🔍 状态源 —— 每样东西住在哪 + 怎么查
+
+每一份 state 都有**唯一权威来源**。知道去哪看，"bot 不工作了"这种谜题立刻变成 30 秒诊断。**任何状态都能用一条 `cat` / `curl` / `gh` / `wrangler` 命令读到** —— 没有黑箱。
+
+### 你的配置状态（住在你的 GitHub fork 里）
+
+| 状态 | repo 里的路径 | 怎么查 | 谁写它 |
+|---|---|---|---|
+| **活跃 alerts** | `price-alert/alerts.json` | `curl https://raw.githubusercontent.com/<你>/claude-investment-skills/main/price-alert/alerts.json` | 你（`git commit`）或 bot（通过 chat 路径）|
+| **触发历史** | `price-alert/alerts_fired.log` | 同上换路径 | `check_alerts.py` cron —— 只追加 |
+| **Bot poll 游标**（仅选项 A）| `price-alert/tg_state.json` | 同上换路径 | `chat_handler.py` cron —— 自动 commit 最近的 `update_id` |
+
+### 你的 secrets（三个可能的家 —— 每条路径各自一份）
+
+| Secret | 本地 `.env` | GitHub Secrets | CF Worker Secrets |
+|---|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | 本地 CLI 测试用 | ✅ Flow B+ | ✅ Flow D |
+| `TELEGRAM_CHAT_ID` | 本地 CLI 测试用 | ✅ Flow B+ | ✅ Flow D |
+| `ANTHROPIC_API_KEY` | 可选 | ✅ Flow C | ✅ Flow D |
+| `GITHUB_TOKEN`（Contents: R+W PAT）| 可选 | （workflow runner 内置 GITHUB_TOKEN，不用自己设）| ✅ Flow D |
+| `GITHUB_REPO`（`<owner>/<repo>`）| 可选 | （内置）| ✅ Flow D |
+
+**查哪里设了哪些**：
+
+```bash
+# 本地 .env（值可见 —— 本地就是这个用途）
+cat ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/.env 2>/dev/null
+
+# GitHub Secrets（只有名字，值加密）
+gh secret list --repo <你>/claude-investment-skills
+
+# Cloudflare Worker Secrets（只有名字）
+cd ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/webhook 2>/dev/null && wrangler secret list
+```
+
+### 实时运维状态
+
+| 你的问题 | 命令 | 看到啥 |
+|---|---|---|
+| Cron 最近跑过吗？ | `gh run list --workflow=price-alerts.yml --limit=5 --repo <你>/claude-investment-skills` | 最近 5 次扫描 + 状态 |
+| 某次 run 为啥失败？ | `gh run view <run-id> --log` | 那次 run 完整 stdout |
+| Webhook 注册 + 健康？ | `curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"` | URL + 排队数 + 最近错误 |
+| Webhook **现在**在干啥？ | `cd .../webhook && wrangler tail` | 实时请求 + console.log |
+| Bot 通吗？ | `curl "https://api.telegram.org/bot$TOKEN/getMe"` | Bot 用户名 + capabilities |
+| Webhook 7 天请求历史 | Cloudflare dashboard → Workers → `price-alert-webhook` → Logs | 实时 + 保留 7 天 |
+
+### 市场数据从哪来（外部源，每次现拉）
+
+| 数据 | 来源 | URL pattern | 费用 |
+|---|---|---|---|
+| 实时价、MA、目标价、P/E、52w 区间 | Yahoo Finance | `query1.finance.yahoo.com/v8/finance/chart/<ticker>` | 免费、无 key |
+| Form 4 内部交易（P / S / A / M / F / G codes）| openinsider.com | `openinsider.com/screener?s=<ticker>` | 免费、scrape HTML |
+| 期权链、IV、OI | yfinance | 同 Yahoo | 免费 |
+| 宏观指标（CPI、CAPE、yields、USDJPY）| FRED CSV | `fred.stlouisfed.org/graph/fredgraph.csv?id=<series>` | 免费、无 key |
+| Fear & Greed Index | CNN 非官方 JSON | `production.dataviz.cnn.io/index/fearandgreed/graphdata` | 免费 |
+| 股票新闻、电话会议、监管公告 | `WebSearch`（Claude Code 内置）| n/a | Pro/Max 订阅免费 |
+
+### 你的安装代码住哪
+
+| 组件 | 本地路径 |
+|---|---|
+| Skill markdown + Python 脚本 | `~/.claude/skills/`（git clone）或 `~/.claude/plugins/claude-investment-skills/`（plugin 装）|
+| Python venv | `/tmp/.insider_venv/`（`setup.sh` 建，每次跑重建）|
+| MCP server 注册 | `~/.claude.json`（由 `claude mcp add` 管理）|
+| 你的对话 memory | `~/.claude/projects/<workspace>/memory/MEMORY.md` |
+| Shell 历史 / 偏好 | （本工具集不存；你 shell 自己存哪就在哪）|
+
+### 什么**不**存（按设计是 ephemeral 的）
+
+- **你的组合持仓** —— 本工具集从不持久化。粘截图也只在那次对话里存在。
+- **实时报价** —— 每次调 skill 现拉；从不缓存。
+- **分析输出** —— 只在你对话历史里（Claude Code 自己的 state，不在本 repo 里）。
+- **Insider 原始 HTML** —— 每次调 `insider_ratio.py` 都从 openinsider 现拉。
+
+> **核心原则**：上面列出的每个 observable 都能用一条终端命令读到。如果你**读不到**，说明系统坏了（或者没装好）。下次想问"我的 bot 工作着吗"，跑上面任意一条命令，而不是瞎猜。
+
+---
+
 ## 🏗️ 架构一览
 
 `price-alert` skill（可选 Telegram + Anthropic API 集成）。chat 路径有**两种实现方式可互换** —— 按你想要的延迟挑一个：

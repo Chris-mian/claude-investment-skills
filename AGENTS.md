@@ -437,13 +437,13 @@ Never use `git push --force` to "fix" this — it would overwrite the webhook's 
 
 ---
 
-## Phase 5 — VERIFICATION commands
+## Phase 5 — VERIFICATION commands (install-time)
 
-Run these to confirm state at each milestone:
+Run these to confirm state at each install milestone:
 
 | Check | Command | Expected |
 |---|---|---|
-| Repo cloned correctly | `ls ~/.claude/skills/setup.sh` | file exists |
+| Repo cloned correctly | `ls ~/.claude/{skills,plugins/claude-investment-skills}/setup.sh 2>/dev/null` | file exists in one of the two paths |
 | yfmcp installed | `claude mcp list \| grep yfmcp` | one line |
 | Telegram bot reachable | `curl "https://api.telegram.org/bot$TOKEN/getMe"` | `{"ok":true,...}` |
 | GH Actions enabled | `gh workflow list --repo <user>/claude-investment-skills` | both workflows listed |
@@ -452,6 +452,40 @@ Run these to confirm state at each milestone:
 | Worker secrets set | `wrangler secret list` (in `webhook/` dir) | 5 entries |
 | Webhook registered + healthy | `curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"` | `url` non-empty, no `last_error_message` |
 | PAT can write to repo | G3 no-op PUT diagnostic | response contains `"commit":` |
+
+---
+
+## Phase 5b — STATE INSPECTION (post-install troubleshooting)
+
+When the user reports "the bot isn't working" / "did my alert fire?" / "is my webhook alive?", **don't guess** — run the matching state inspector. Every observable in this system is one command away.
+
+### "Where's my X?" lookup table
+
+| User asks | Run this | Shows |
+|---|---|---|
+| "What alerts do I have?" | `curl https://raw.githubusercontent.com/<user>/claude-investment-skills/main/price-alert/alerts.json` | Full alert config from authoritative source (GitHub) |
+| "When did the scanner last run?" | `gh run list --workflow=price-alerts.yml --limit=5 --repo <user>/claude-investment-skills` | Last 5 runs with status + time |
+| "Why did the last run fail?" | `gh run view <run-id> --log` | Full stdout of that run |
+| "Is my webhook receiving?" | `curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"` | URL + pending count + last error |
+| "What is the webhook doing right now?" | `cd ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/webhook && wrangler tail` | Streaming live requests |
+| "Did the bot get my last message?" | `wrangler tail` + ask user to resend from phone | Should see incoming request within 1 sec |
+| "What's in my secrets?" | `gh secret list --repo <user>/...` + `wrangler secret list` | Names only (values encrypted) |
+| "Is my install at the right version?" | `cd <install-path> && git rev-parse HEAD` (git-clone) OR `cat <install-path>/.claude-plugin/plugin.json` (plugin) | Commit SHA or version string |
+| "What does my local .env actually contain?" | `cat ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/.env 2>/dev/null` | Real values — `.env` is gitignored, safe to view locally |
+| "Have I been firing too many alerts?" | `curl https://raw.githubusercontent.com/<user>/claude-investment-skills/main/price-alert/alerts_fired.log` | Append-only history |
+
+### State source vs. derivative (don't confuse them)
+
+| Authoritative state (source) | Derivatives (don't rely on these) |
+|---|---|
+| `alerts.json` on GitHub fork | Bot's reply messages — they reflect what `alerts.json` was at the moment of the call, can drift after subsequent changes |
+| Cloudflare Worker secrets (set via `wrangler`) | Worker's `wrangler tail` output — shows what the worker SEES, not what's set; if the worker doesn't see a secret it's misconfigured |
+| Live Yahoo Finance API | Any cached number Claude mentioned earlier in the conversation — stale by minutes |
+| Live openinsider HTML | `insider_ratio.py` output from a previous call — refetch if asking the same question 30+ minutes later |
+
+### Pointers — when in doubt, send the user to the README section
+
+The user-facing equivalent of this Phase 5b is in [`README.md` § "🔍 State sources"](./README.md#-state-sources--where-everything-lives--how-to-inspect-it). It's the same content framed for users (no agent-orchestration jargon). When the user asks a state question outside what's in your context window, **paste them the link** and walk through the relevant row together.
 
 ---
 

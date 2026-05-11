@@ -186,6 +186,84 @@ This trips people up because the SAME data is computed in TWO different places d
 
 ---
 
+## 🔍 State sources — where everything lives + how to inspect it
+
+Every piece of state has **one authoritative source**. Knowing where to look turns "the bot isn't working" mysteries into 30-second diagnostics. Nothing is hidden — every state location is reachable with a single `cat` / `curl` / `gh` / `wrangler` command.
+
+### Your config state (lives in your GitHub fork)
+
+| State | Path in repo | How to inspect | Who writes it |
+|---|---|---|---|
+| **Active alerts** | `price-alert/alerts.json` | `curl https://raw.githubusercontent.com/<you>/claude-investment-skills/main/price-alert/alerts.json` | You (`git commit`) OR bot (via chat path) |
+| **Fired alert history** | `price-alert/alerts_fired.log` | Same URL, change path | `check_alerts.py` cron — append-only |
+| **Bot poll cursor** (Option A only) | `price-alert/tg_state.json` | Same URL, change path | `chat_handler.py` cron — auto-commits last `update_id` |
+
+### Your secrets (three potential homes — each path needs its own copy)
+
+| Secret | Local `.env` | GitHub Secrets | CF Worker Secrets |
+|---|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | for local CLI testing | ✅ Flow B+ | ✅ Flow D |
+| `TELEGRAM_CHAT_ID` | for local CLI testing | ✅ Flow B+ | ✅ Flow D |
+| `ANTHROPIC_API_KEY` | optional | ✅ Flow C | ✅ Flow D |
+| `GITHUB_TOKEN` (Contents: R+W PAT) | optional | (built-in to workflow runner) | ✅ Flow D |
+| `GITHUB_REPO` (`<owner>/<repo>`) | optional | (built-in) | ✅ Flow D |
+
+**Inspect what's set where**:
+
+```bash
+# Local .env (values visible — that's the point of local)
+cat ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/.env 2>/dev/null
+
+# GitHub Secrets (names only, values encrypted)
+gh secret list --repo <you>/claude-investment-skills
+
+# Cloudflare Worker Secrets (names only)
+cd ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/webhook 2>/dev/null && wrangler secret list
+```
+
+### Live operational state
+
+| Question you might ask | Command | What it shows |
+|---|---|---|
+| Did the cron run recently? | `gh run list --workflow=price-alerts.yml --limit=5 --repo <you>/claude-investment-skills` | Last 5 scan runs + status |
+| Why did one run fail? | `gh run view <run-id> --log` | Full stdout from that run |
+| Is the webhook registered + healthy? | `curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"` | URL + pending count + last error |
+| What's the webhook doing RIGHT NOW? | `cd .../webhook && wrangler tail` | Streaming requests + console.log |
+| Is my bot reachable? | `curl "https://api.telegram.org/bot$TOKEN/getMe"` | Bot username + capabilities |
+| Webhook 7-day request history | Cloudflare dashboard → Workers → `price-alert-webhook` → Logs | Real-time + retained 7 days |
+
+### Where market data comes from (external sources, fetched fresh each call)
+
+| Data | Source | URL pattern | Cost |
+|---|---|---|---|
+| Live prices, MAs, target, P/E, 52w range | Yahoo Finance | `query1.finance.yahoo.com/v8/finance/chart/<ticker>` | Free, no key |
+| Form 4 insider transactions (P / S / A / M / F / G codes) | openinsider.com | `openinsider.com/screener?s=<ticker>` | Free, scraped HTML |
+| Options chains, IV, OI | yfinance | Same Yahoo backend | Free |
+| Macro indicators (CPI, CAPE, yields, USDJPY) | FRED CSV | `fred.stlouisfed.org/graph/fredgraph.csv?id=<series>` | Free, no key |
+| Fear & Greed Index | CNN unofficial JSON | `production.dataviz.cnn.io/index/fearandgreed/graphdata` | Free |
+| Stock news, earnings calls, regulatory filings | `WebSearch` (built into Claude Code) | n/a | Free w/ Pro/Max sub |
+
+### Where your install code lives
+
+| Component | Local path |
+|---|---|
+| Skill markdown + Python scripts | `~/.claude/skills/` (git clone) OR `~/.claude/plugins/claude-investment-skills/` (plugin install) |
+| Python venv | `/tmp/.insider_venv/` (created by `setup.sh`, recreates fresh each run) |
+| MCP server registration | `~/.claude.json` (managed by `claude mcp add`) |
+| Your conversation memory | `~/.claude/projects/<workspace>/memory/MEMORY.md` |
+| Your shell history / preferences | (not stored by this toolkit; lives where your shell puts it) |
+
+### What is NOT stored (ephemeral by design)
+
+- **Your portfolio positions** — never persisted by this toolkit. If you paste a screenshot, it lives in that conversation only.
+- **Live price quotes** — fetched fresh on every skill invocation; never cached.
+- **Analysis outputs** — only as your conversation history (in Claude Code's own state, not by this repo).
+- **Insider raw HTML** — fetched fresh from openinsider every `insider_ratio.py` call.
+
+> **Key principle**: every observable in this list is reachable from your terminal with one command. If you can't see it, something is broken (or not installed). When you ask "is my bot working?", run one of the commands above instead of guessing.
+
+---
+
 ## 🏗️ Architecture at a glance
 
 For the `price-alert` skill (optional Telegram + Anthropic API integration). The chat path has **two interchangeable implementations** — pick one based on the latency you want:

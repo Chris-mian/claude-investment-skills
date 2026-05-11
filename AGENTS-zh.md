@@ -438,21 +438,55 @@ git push
 
 ---
 
-## 阶段 5 —— VERIFICATION 命令
+## 阶段 5 —— VERIFICATION 命令（装的时候用）
 
-每个里程碑后跑这些确认状态：
+每个安装里程碑后跑这些确认状态：
 
 | 检查 | 命令 | 期望 |
 |---|---|---|
-| Repo 克隆 OK | `ls ~/.claude/skills/setup.sh` | 文件存在 |
+| Repo 克隆 OK | `ls ~/.claude/{skills,plugins/claude-investment-skills}/setup.sh 2>/dev/null` | 文件存在于其中一条路径 |
 | yfmcp 装了 | `claude mcp list \| grep yfmcp` | 一行输出 |
 | Telegram bot 通 | `curl "https://api.telegram.org/bot$TOKEN/getMe"` | `{"ok":true,...}` |
 | GH Actions 启用 | `gh workflow list --repo <user>/claude-investment-skills` | 两个 workflow 都列出来 |
-| GitHub Secrets 设了 | `gh secret list --repo <user>/claude-investment-skills` | secret 名字（值不显示） |
+| GitHub Secrets 设了 | `gh secret list --repo <user>/claude-investment-skills` | secret 名字（值不显示）|
 | Cloudflare worker 部署了 | `curl https://price-alert-webhook.<sub>.workers.dev` | `price-alert webhook — POST only` |
 | Worker secrets 设了 | `wrangler secret list`（在 `webhook/` 目录）| 5 个 entries |
 | Webhook 注册 + 健康 | `curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"` | `url` 非空，无 `last_error_message` |
 | PAT 能写 | G3 的 no-op PUT 诊断 | 响应含 `"commit":` |
+
+---
+
+## 阶段 5b —— STATE INSPECTION（装完后排错用）
+
+用户说"bot 不工作了"/"我的 alert 触发了吗"/"webhook 还活着吗"时，**别猜** —— 跑对应的状态查询。本系统里**每个 observable 都只差一条命令**。
+
+### "我的 X 在哪？"查表
+
+| 用户问 | 跑这个 | 看到啥 |
+|---|---|---|
+| "我有哪些 alert？" | `curl https://raw.githubusercontent.com/<用户>/claude-investment-skills/main/price-alert/alerts.json` | 完整 alert 配置，从权威源 GitHub 拿 |
+| "扫描器最近什么时候跑的？" | `gh run list --workflow=price-alerts.yml --limit=5 --repo <用户>/claude-investment-skills` | 最近 5 次 run + 状态 + 时间 |
+| "上次 run 为啥失败了？" | `gh run view <run-id> --log` | 那次 run 的完整 stdout |
+| "Webhook 在收消息吗？" | `curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"` | URL + 排队数 + 最近错误 |
+| "Webhook **现在**在干啥？" | `cd ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/webhook && wrangler tail` | 实时请求流 |
+| "Bot 收到我的消息了吗？" | `wrangler tail` + 让用户从手机重发 | 应该 1 秒内看到请求进来 |
+| "我的 secrets 里有啥？" | `gh secret list --repo <用户>/...` + `wrangler secret list` | 只有名字（值加密）|
+| "我装的是哪个版本？" | `cd <install-path> && git rev-parse HEAD`（git-clone）或 `cat <install-path>/.claude-plugin/plugin.json`（plugin）| Commit SHA 或 version 字符串 |
+| "我本地 `.env` 实际写了啥？" | `cat ~/.claude/{skills,plugins/claude-investment-skills}/price-alert/.env 2>/dev/null` | 真实值 —— `.env` 已 gitignore，本地看完全 OK |
+| "我是不是触发了太多 alert？" | `curl https://raw.githubusercontent.com/<用户>/claude-investment-skills/main/price-alert/alerts_fired.log` | 只追加的历史 |
+
+### 状态源 vs 衍生品（别搞混）
+
+| 权威状态（source）| 衍生品（不要依赖）|
+|---|---|
+| GitHub fork 上的 `alerts.json` | Bot 的回复消息 —— 反映**那一刻** `alerts.json` 的样子，后续修改后会偏移 |
+| Cloudflare Worker secrets（`wrangler` 设的）| Worker 的 `wrangler tail` 输出 —— 显示 worker **看到**的；没看到说明配置错了 |
+| Yahoo Finance API（实时）| Claude 对话里**之前**提到过的数字 —— 几分钟就 stale |
+| openinsider 当前 HTML | 30 分钟前同个 ticker 的 `insider_ratio.py` 输出 —— 同样问题问第二次，重新拉 |
+
+### 路径标识 —— 拿不准时把用户引到 README
+
+本节面向用户的等价内容在 [`README-zh.md` § "🔍 状态源"](./README-zh.md#-状态源--每样东西住在哪--怎么查)。一样的内容，去掉 agent 编排术语。用户问 state 类问题，超出你 context window 时，**把那个链接给他**，一起走对应行。
 
 ---
 
