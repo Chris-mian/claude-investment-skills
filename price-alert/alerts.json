@@ -19,7 +19,7 @@
       "condition": {
         "op": "drop_intraday",
         "pct": 3,
-        "prev_close_at_check": 195.94
+        "prev_close_at_check": 195.95
       },
       "note": "ORCL \u5355\u65e5\u8dcc\u5e45\u8d85\u8fc7 3%\uff08\u542b\u76d8\u540e\uff09",
       "created": "2026-05-11",
@@ -84,7 +84,7 @@
       "condition": {
         "op": "rise_intraday",
         "pct": 2,
-        "prev_close_at_check": 195.94
+        "prev_close_at_check": 195.95
       },
       "note": "Set via Telegram bot",
       "created": "2026-05-11",
@@ -123,7 +123,8 @@
       "id": "nok-below_ma_50-c261a5",
       "ticker": "NOK",
       "condition": {
-        "op": "below_ma_50"
+        "op": "below_ma_50",
+        "ma_at_check": 9.5694
       },
       "note": "NOK T2 \u52a0\u4ed3 \u2014 50DMA \u8dcc\u7834\uff08\u6df1\u5ea6\u56de\u8c03\u673a\u4f1a\uff09",
       "created": "2026-05-11",
@@ -135,7 +136,8 @@
       "id": "orcl-above_ma_200-30d3b2",
       "ticker": "ORCL",
       "condition": {
-        "op": "above_ma_200"
+        "op": "above_ma_200",
+        "ma_at_check": 210.9892
       },
       "note": "ORCL trend-turn \u4fe1\u53f7 \u2014 200DMA $211 \u7a81\u7834\uff08\u91cd\u65b0\u8bc4\u4f30\uff09",
       "created": "2026-05-11",
@@ -174,7 +176,8 @@
       "ticker": "POWL",
       "condition": {
         "op": "rise_intraday",
-        "pct": 5
+        "pct": 5,
+        "prev_close_at_check": 309.39
       },
       "note": "POWL \u5355\u65e5\u66b4\u6da8 5%+ \u2014 \u770b\u662f\u5426\u53c8\u6709\u65b0 hyperscaler \u8ba2\u5355\u516c\u544a",
       "created": "2026-05-11",
@@ -193,7 +196,10 @@
       "created": "2026-05-11",
       "created_price": 14.6,
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-12T01:08:48.177224+00:00",
+      "fired_at_price": 12.829999923706055,
+      "fired_reason": "$12.83 \u2264 $13.50"
     },
     {
       "id": "hlit-below-5f3b91",
