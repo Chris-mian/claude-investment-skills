@@ -219,6 +219,58 @@
       "created_price": 14.6,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "nok-above-8c4e9a",
+      "ticker": "NOK",
+      "condition": {
+        "op": "above",
+        "threshold": 16
+      },
+      "note": "NOK T1 take-profit \u51cf\u4ed3 25% \u2014 Gaetano/Crux 12m base case \u4e0b\u9650 + 2027/1 $20 Call wall 72K OI \u9a8c\u8bc1",
+      "created": "2026-05-12",
+      "created_price": 13.17,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "nok-above-3f7d21",
+      "ticker": "NOK",
+      "condition": {
+        "op": "above",
+        "threshold": 20
+      },
+      "note": "NOK T2 take-profit \u51cf\u4ed3 50% \u2014 Gaetano 12m bull case + 2027/1 $20 Call DOMINANT OI 72K \u89e6\u53d1",
+      "created": "2026-05-12",
+      "created_price": 13.17,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "nok-above-5b9e44",
+      "ticker": "NOK",
+      "condition": {
+        "op": "above",
+        "threshold": 26
+      },
+      "note": "NOK T3 take-profit \u51cf\u4ed3 80% \u2014 Gaetano 18-24m base case \u4e0a\u9650\uff08+100% from $13\uff09\uff0c\u4ec5\u7559 20% \u957f\u671f\u770b bull case $28-32",
+      "created": "2026-05-12",
+      "created_price": 13.17,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "nok-rise_intraday-7a2c18",
+      "ticker": "NOK",
+      "condition": {
+        "op": "rise_intraday",
+        "pct": 7
+      },
+      "note": "NOK \u5355\u65e5\u66b4\u6da8 7%+ \u2014 \u53ef\u80fd\u662f hyperscaler \u65b0\u8ba2\u5355 / NVIDIA AI-RAN \u65b0\u6d88\u606f / Q2 earnings \u5077\u8dd1",
+      "created": "2026-05-12",
+      "created_price": 13.17,
+      "active": true,
+      "fired": false
     }
   ]
 }
