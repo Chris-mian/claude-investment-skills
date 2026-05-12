@@ -2,6 +2,14 @@
 """
 form4_firehose.py — Real-time SEC Form 4 aggregator with Telegram alerts.
 
+v2.1 (2026-05): adds Tier-2 enrichment — every alert is augmented with
+company one-liner, P/E + market cap + net cash, 52W price context, and a
+0-10 Smart Money Score. Enrichment is optional + non-fatal: if yfinance
+fails or the user disabled enrichment, alerts fall back to the v2.0 basic
+format. Toggle via:
+    python scripts/firehose_cli.py --enrich-on  | --enrich-off
+or env var:  ENRICH=0  (off)  /  ENRICH=1  (on)
+
 Pulls the SEC EDGAR Form 4 "current filings" atom feed every cron tick,
 parses each new filing's XML, filters for OPEN-MARKET PURCHASES (code "P")
 above a configurable USD threshold, and pushes a Telegram alert for each
@@ -32,6 +40,8 @@ Env vars:
   EDGAR_USER_AGENT      Required by SEC: "<email> <product>/<version>"
                         Default: "ssurmiczizhao@gmail.com form4-firehose/1.0"
   TEST_MODE             "1" prints alerts to stdout instead of sending Telegram
+  ENRICH                "0"/"off" disables v2.1 enrichment (Tier-2 valuation +
+                        score). "1"/"on" forces enable. Unset = use config file.
 """
 
 import json
@@ -44,6 +54,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+
+# v2.1: enrichment is optional + non-fatal. Import lazily-safe.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from enrichment import enrich, is_enabled as enrichment_enabled
+    from enrichment.format import render_enriched
+    _ENRICH_AVAILABLE = True
+except Exception as _imp_err:
+    _ENRICH_AVAILABLE = False
+    print(f"[INFO] enrichment package not available: {_imp_err}", file=sys.stderr)
 
 # ─── Constants ────────────────────────────────────────────────────────────
 EDGAR_RSS_URL = (
@@ -308,7 +328,12 @@ def main() -> int:
     state = load_state()
     seen = set(state.get("seen_accessions", []))
 
-    print(f"[INFO] Pulling EDGAR Form 4 feed... (min_value=${MIN_VALUE_USD:,})",
+    enrich_status = (
+        "ON" if (_ENRICH_AVAILABLE and enrichment_enabled())
+        else ("DISABLED" if _ENRICH_AVAILABLE else "UNAVAILABLE")
+    )
+    print(f"[INFO] Pulling EDGAR Form 4 feed... "
+          f"(min_value=${MIN_VALUE_USD:,}, enrich={enrich_status})",
           file=sys.stderr)
     try:
         rss = fetch_rss()
@@ -363,6 +388,16 @@ def main() -> int:
                       f"{filing['owner']}", file=sys.stderr)
             else:
                 msg = format_alert(filing, side="BUY")
+                # v2.1: append enrichment (P/E, score, etc.) if available + enabled
+                if msg and _ENRICH_AVAILABLE and enrichment_enabled():
+                    try:
+                        enriched = enrich(filing["ticker"], filing, total)
+                        if enriched:
+                            msg = render_enriched(msg, enriched)
+                    except Exception as ee:
+                        # Never let enrichment kill the alert
+                        print(f"[ENRICH-FAIL] {filing['ticker']}: {ee}",
+                              file=sys.stderr)
                 if msg and send_telegram(msg):
                     alerts_sent += 1
                     print(f"[ALERT-BUY] {filing['ticker']:6s}  ${total:>12,.0f}  "
@@ -377,6 +412,14 @@ def main() -> int:
                 sell_threshold = MIN_VALUE_USD * 5
                 if total >= sell_threshold:
                     msg = format_alert(filing, side="SELL")
+                    if msg and _ENRICH_AVAILABLE and enrichment_enabled():
+                        try:
+                            enriched = enrich(filing["ticker"], filing, total)
+                            if enriched:
+                                msg = render_enriched(msg, enriched)
+                        except Exception as ee:
+                            print(f"[ENRICH-FAIL] {filing['ticker']}: {ee}",
+                                  file=sys.stderr)
                     if msg and send_telegram(msg):
                         alerts_sent += 1
                         print(f"[ALERT-SELL] {filing['ticker']:6s}  ${total:>12,.0f}",

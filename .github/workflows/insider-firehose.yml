@@ -27,6 +27,15 @@ on:
         description: 'Test mode (print to log, do NOT send Telegram)'
         required: false
         default: 'false'
+      enrich:
+        description: 'Tier-2 enrichment (P/E + score + 52W context). default/on/off'
+        required: false
+        default: 'default'
+        type: choice
+        options:
+          - default
+          - 'on'
+          - 'off'
 
 permissions:
   contents: write  # to commit state file back
@@ -45,8 +54,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install requests
-        run: pip install --quiet requests
+      - name: Install dependencies
+        # requests = EDGAR fetch (always required)
+        # yfinance = v2.1 enrichment (P/E, market cap, 52W context). Pinned to
+        #   a known-good range; quiet install to keep logs lean.
+        run: pip install --quiet 'requests>=2.31' 'yfinance>=0.2.40'
 
       - name: Run Form 4 scanner
         env:
@@ -55,7 +67,10 @@ jobs:
           FORM4_MIN_VALUE:    ${{ inputs.min_value || '200000' }}
           FORM4_INCLUDE_SELLS: ${{ inputs.include_sells == 'true' && '1' || '' }}
           TEST_MODE:           ${{ inputs.test_mode == 'true' && '1' || '' }}
-          EDGAR_USER_AGENT: "ssurmiczizhao@gmail.com form4-firehose/1.0 (ci)"
+          # ENRICH respects the config file unless workflow_dispatch overrides.
+          # default = let enrichment_config.json decide. on/off = override for this run.
+          ENRICH:              ${{ inputs.enrich == 'on' && '1' || (inputs.enrich == 'off' && '0' || '') }}
+          EDGAR_USER_AGENT: "ssurmiczizhao@gmail.com form4-firehose/1.1 (ci)"
         run: |
           python insider-firehose/scripts/form4_firehose.py
 
@@ -63,8 +78,15 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # The cron only writes form4_state.json. enrichment_config.json is
+          # user-managed (via firehose_cli.py) and only re-committed if the
+          # user toggled it inside a workflow_dispatch run.
+          CHANGED=""
           if [[ -n "$(git status --porcelain insider-firehose/scripts/form4_state.json)" ]]; then
             git add insider-firehose/scripts/form4_state.json
+            CHANGED="state"
+          fi
+          if [[ -n "$CHANGED" ]]; then
             git commit -m "firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
             git push
           else

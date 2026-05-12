@@ -66,7 +66,7 @@ If you're sweeping orders or scalping, use a **broker-side alert**. Use this too
 
 ## Roadmap by version
 
-### v2.1 (next — insider firehose iterations)
+### v2.2 (next — insider firehose iterations)
 
 | Feature | Owner files |
 |---|---|
@@ -74,6 +74,8 @@ If you're sweeping orders or scalping, use a **broker-side alert**. Use this too
 | **Watchlist filter** — alerts on your already-held tickers get 🟡 highlight + always pass through, even below threshold | `form4_state.json` add `watchlist` field; pull from `price-alert/alerts.json` ticker list |
 | **Daily digest** — end-of-day Telegram summary aggregating all buys (not just ≥ $200k), sortable | `form4_digest.py` new script + separate cron at 17:30 ET |
 | **Founder buy auto-bump** — if `officerTitle` contains "Founder", lower threshold to $50k (founder $50k = high signal vs CFO $200k) | `form4_firehose.py` role-aware threshold |
+| **Historical insider context in score** — openinsider 180d cluster detection feeds into Smart Money Score (+1 if 3rd buy in 90d) | `enrichment/insider_history.py` new module |
+| **Score-based filter** — `FORM4_MIN_SCORE` env var to suppress alerts below a chosen score (e.g. only push score ≥ 5) | `form4_firehose.py` post-enrichment filter |
 
 ### v1.7 (next minor)
 
@@ -152,6 +154,7 @@ For new skills, follow the existing `SKILL.md` pattern with `description:` front
 
 | Version | Date | Highlights |
 |---|---|---|
+| **2.1** | 2026-05-12 | **`insider-firehose` v2.1: Tier-2 enrichment.** Every alert is auto-augmented with business one-liner, P/E + market cap + net cash + dividend, 52W price context (vs 50DMA / 200DMA / high / low), and a 0-10 Smart Money Score (role + check size + valuation + price action). Enabled by default; toggle via Telegram `/enrich on` / `/enrich off` (Chinese aliases work too), CLI `firehose_cli.py`, GitHub Actions input, or `ENRICH` env var. Non-fatal — if yfinance fails, falls back to v2.0 basic alert. yfinance added to workflow install step. Worker fast-path bypasses Claude for `/enrich` commands (cheap + low latency). |
 | **2.0** | 2026-05-11 | **NEW SKILL: `insider-firehose`** — real-time SEC EDGAR Form 4 monitor with Telegram push alerts for officer/director open-market buys ≥ $200k. Cron every 30 min, weekdays. 2-5 min latency vs openinsider's 12-24 hours. State-managed dedup via committed JSON. Plugin marketplace + git-clone install both work. |
 | 1.7 | 2026-05-11 | Plugin marketplace install path (`/plugin marketplace add ...`), two-way door with existing git-clone path. 47 SKILL.md script paths rewritten to dual-mode resolution. NEXT-STEPS roadmap + "Who this is for / not for" positioning, state-source observability section. |
 | 1.6 | 2026-05-11 | Cloudflare Worker webhook (1-3 sec chat latency), AGENTS.md setup orchestration guide, pre-rendered Mermaid diagrams (SVG/PNG), pre-flight methodology embedded in 6 skills, AGENT-TOOL-REFERENCE.md extended with Tool 6 + Skill Catalog |

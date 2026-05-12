@@ -120,6 +120,7 @@ async function getCurrentPrice(ticker: string): Promise<number | null> {
 
 // ─── GitHub Contents API ──────────────────────────────────────────────────
 const ALERTS_PATH = "price-alert/alerts.json";
+const ENRICH_CONFIG_PATH = "insider-firehose/enrichment_config.json";
 
 // btoa/atob only handle Latin1. alerts.json may contain Chinese in `note` —
 // round-trip through TextEncoder/TextDecoder so non-ASCII survives.
@@ -170,6 +171,100 @@ async function commitAlerts(env: Env, alertsObj: any, sha: string, message: stri
     },
   );
   if (!r.ok) throw new Error(`GitHub commit failed: ${r.status} ${await r.text()}`);
+}
+
+// ─── Insider firehose enrichment toggle ───────────────────────────────────
+// Fast-path: /enrich on|off|status doesn't need Claude — just flip the
+// config file via the GitHub Contents API. Same pattern as alerts.json.
+
+async function fetchEnrichConfig(env: Env): Promise<{ data: any; sha: string }> {
+  const r = await fetch(
+    `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${ENRICH_CONFIG_PATH}`,
+    {
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+        "User-Agent": "price-alert-webhook/1.0",
+        Accept: "application/vnd.github+json",
+      },
+    },
+  );
+  if (!r.ok) throw new Error(`GitHub fetch failed: ${r.status} ${await r.text()}`);
+  const meta = (await r.json()) as any;
+  const content = base64DecodeUtf8(meta.content.replace(/\n/g, ""));
+  return { data: JSON.parse(content), sha: meta.sha };
+}
+
+async function commitEnrichConfig(env: Env, cfg: any, sha: string, msg: string): Promise<void> {
+  const content = base64EncodeUtf8(JSON.stringify(cfg, null, 2) + "\n");
+  const r = await fetch(
+    `https://api.github.com/repos/${env.GITHUB_REPO}/contents/${ENRICH_CONFIG_PATH}`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+        "User-Agent": "price-alert-webhook/1.0",
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message: msg, content, sha, branch: "main" }),
+    },
+  );
+  if (!r.ok) throw new Error(`GitHub commit failed: ${r.status} ${await r.text()}`);
+}
+
+/**
+ * Handle /enrich [on|off|status] inline. Returns the reply text or null
+ * if the message doesn't match. We do this *before* hitting Claude to keep
+ * latency low and avoid spending LLM tokens on a simple toggle.
+ */
+async function tryEnrichCommand(env: Env, text: string): Promise<string | null> {
+  // Accept: /enrich, /enrich on, /enrich off, /enrich status (case-insensitive)
+  // Also accept Chinese aliases for convenience
+  const m = text.trim().match(/^\/enrich(?:@\w+)?(?:\s+(on|off|status|enable|disable|开|关|状态|状況))?\s*$/i);
+  if (!m) return null;
+
+  const action = (m[1] || "status").toLowerCase();
+  const enableAliases = ["on", "enable", "开"];
+  const disableAliases = ["off", "disable", "关"];
+
+  // STATUS: just read and report
+  if (!enableAliases.includes(action) && !disableAliases.includes(action)) {
+    try {
+      const { data } = await fetchEnrichConfig(env);
+      const on = data?.enabled !== false;
+      return on
+        ? "✅ *Enrichment: ON*\n\nAlerts include: business one-liner · P/E · 52W context · Smart Money Score.\n\nDisable with `/enrich off`."
+        : "🔕 *Enrichment: OFF*\n\nAlerts show ticker + buyer + size only.\n\nEnable with `/enrich on`.";
+    } catch (e: any) {
+      return `⚠️ Could not read enrichment config: ${String(e.message || e).slice(0, 200)}`;
+    }
+  }
+
+  const turnOn = enableAliases.includes(action);
+  try {
+    const { data, sha } = await fetchEnrichConfig(env);
+    const wasOn = data?.enabled !== false;
+    if (wasOn === turnOn) {
+      return turnOn
+        ? "✅ Enrichment already ON. (No change.)"
+        : "🔕 Enrichment already OFF. (No change.)";
+    }
+    const next = {
+      enabled: turnOn,
+      note: `Toggled via Telegram /${action} at ${new Date().toISOString()}`,
+    };
+    await commitEnrichConfig(
+      env,
+      next,
+      sha,
+      `firehose: enrichment ${turnOn ? "ON" : "OFF"} (via Telegram)`,
+    );
+    return turnOn
+      ? "✅ *Enrichment ENABLED*\n\nNext insider alert will include: business one-liner · P/E · 52W context · Smart Money Score."
+      : "🔕 *Enrichment DISABLED*\n\nNext insider alerts will be basic (ticker + buyer + size only).\n\nRe-enable with `/enrich on`.";
+  } catch (e: any) {
+    return `⚠️ Toggle failed: ${String(e.message || e).slice(0, 200)}`;
+  }
 }
 
 // ─── Build a condition object from Claude's tool input ────────────────────
@@ -314,6 +409,13 @@ async function handleMessage(env: Env, message: any): Promise<void> {
   // Whitelist check
   if (chatId !== env.TELEGRAM_CHAT_ID) {
     console.log(`Ignoring message from non-whitelisted chat ${chatId}`);
+    return;
+  }
+
+  // Fast-path: /enrich commands bypass Claude (cheaper + faster)
+  const enrichReply = await tryEnrichCommand(env, text);
+  if (enrichReply !== null) {
+    await sendTelegram(env, chatId, enrichReply);
     return;
   }
 

@@ -1,0 +1,4 @@
+{
+  "enabled": true,
+  "note": "Toggle via: python scripts/firehose_cli.py --enrich-on | --enrich-off  OR Telegram: /enrich on | /enrich off | /enrich status"
+}

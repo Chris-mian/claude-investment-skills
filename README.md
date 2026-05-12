@@ -1078,6 +1078,10 @@ The framework is opinionated — it reflects one specific style (top-down, value
 **License**: [MIT](./LICENSE)
 
 ### Changelog
+- **2.1 (2026-05-12)**: `insider-firehose` v2.1: alerts auto-include business one-liner + P/E + market cap + net cash + 52W context + 0-10 Smart Money Score. Enrichment is on by default; toggle via Telegram `/enrich on` / `/enrich off` (Chinese aliases too), CLI `firehose_cli.py`, GitHub Actions input, or `ENRICH` env var. Non-fatal pipeline — if yfinance fails, falls back to v2.0 basic alert.
+- **2.0 (2026-05-11)**: NEW SKILL `insider-firehose` — real-time SEC EDGAR Form 4 monitor with Telegram push for officer/director open-market buys ≥ $200k. 30-min cron weekdays. 2-5 min latency vs openinsider's 12-24 hours.
+- **1.7 (2026-05-11)**: Plugin marketplace install path (two-way door with git-clone). 47 SKILL.md script paths rewritten to dual-mode resolution. NEXT-STEPS roadmap.
+- **1.6 (2026-05-11)**: Cloudflare Worker webhook (1-3 sec chat latency), AGENTS.md, pre-rendered Mermaid diagrams, pre-flight methodology embedded in 6 skills.
 - **1.5 (2026-05-10)**: First public release on GitHub. Added MIT LICENSE, INTRODUCTION.md/INTRODUCTION-zh.md (5-min friendly intro), full Chinese translations of ARCHITECTURE, INVESTMENT-WORKFLOW, AGENT-TOOL-REFERENCE. Enhanced README with "How natural language triggers skills" section and 5 real conversation examples (EN + CN). Updated setup.sh to verify macro_pull.py.
 - **1.4 (2026-05-09)**: `macro-warning` gets a real data backend — `scripts/macro_pull.py` with direct APIs (yfinance + FRED CSV + CNN unofficial JSON + multpl scrape). New `ARCHITECTURE.md` documenting why we use direct APIs + 1 MCP instead of 3-MCP stack.
 - **1.3 (2026-05-08)**: New `macro-warning` skill — daily batch-mode 8-layer pullback radar (NDX P/E >38 / VIX <14 / F&G >85 = override YELLOW). Cron-friendly. Memory integration via `macro_history.jsonl`. Added bilingual examples section.

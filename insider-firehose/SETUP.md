@@ -1,6 +1,8 @@
-# Insider Firehose — Setup
+# Insider Firehose — Setup (v2.1)
 
 If you've already completed `price-alert/SETUP.md` (Telegram bot + GitHub Secrets), this skill needs **zero additional setup** — it reuses the same bot and secrets.
+
+**v2.1 (May 2026):** alerts are now auto-enriched (P/E + market cap + 52W context + Smart Money Score). Enabled by default — see [Enrichment toggle](#enrichment-toggle-v21) below to disable.
 
 [中文版 / Chinese version](./SETUP-zh.md)
 
@@ -61,9 +63,45 @@ Run workflow → include_sells → true   (also alerts on sells ≥ 5x threshold
 
 ---
 
-## How alerts look
+## How alerts look (v2.1 enriched)
 
-Each alert is one Telegram message in this format:
+Each alert is one Telegram message. With enrichment **on** (default), you get the basic block + 4 auto-generated sections:
+
+```
+🚨🟢 INSIDER BUY — $974,582
+
+Ticker: MKTW  (MARKETWISE, INC.)
+🪑 Stansberry Frank Porter
+Dir, 10%
+
+51,375 shares @ $18.97
+(4 transactions same filing)
+
+[SEC EDGAR ›]
+
+🏢 MarketWise, Inc. operates a content and technology multi-brand
+   platform for self-directed investors. · Financial Services
+
+📈 Valuation
+  Cap: $48M
+  P/E: 10.8 (fwd 90.3)
+  Net cash: $47M (99% of cap)
+  Div yield: 4.81%
+  Rev growth: -7.8% YoY
+
+📊 Price
+  Now: $18.06
+  1Y: +18.3%
+  52W: +34% from low / -17% from high
+  vs MA: 50d +8.5% · 200d +9.9%
+
+⭐ Smart Money Score: 4/10
+  ✅ Cheap P/E (10.8)
+  ✅ Net cash 99% of mcap
+  ✅ Dividend 4.8%
+```
+
+With enrichment **off**, you get the v2.0 basic block only:
 
 ```
 🚨🟢 INSIDER BUY — $12,999,988
@@ -85,6 +123,48 @@ Role emoji legend:
 - 🪑 Director
 - 🐳 10% Holder (usually large investor / activist fund)
 - ❓ Role couldn't be parsed (rare)
+
+Smart Money Score range:
+- 🔥🔥🔥 **9-10** — Founder/CEO whale + cheap + near 52W low (rare, ~1-2/month)
+- ⭐⭐⭐ **7-8** — Senior officer big check + valuation/price tailwind
+- ⭐⭐ **5-6** — Decent signal with caveats
+- ⭐ **3-4** — Noteworthy but mixed
+- ▫️ **0-2** — Low-conviction filing
+
+---
+
+## Enrichment toggle (v2.1)
+
+Enrichment is **on by default**. Three equivalent ways to flip it:
+
+### From Telegram (easiest — works on phone)
+
+Send any of these to your alert bot:
+
+```
+/enrich          → show current state
+/enrich on       → enable
+/enrich off      → disable
+/enrich status   → show current state
+```
+
+The bot edits `enrichment_config.json` in your fork via the GitHub API, same path as `alerts.json`. Next cron run picks up the new state. Chinese aliases (`/enrich 开`, `/enrich 关`, `/enrich 状态`) also work.
+
+### From CLI
+
+```bash
+python insider-firehose/scripts/firehose_cli.py --status
+python insider-firehose/scripts/firehose_cli.py --enrich-on
+python insider-firehose/scripts/firehose_cli.py --enrich-off
+# remember to commit + push enrichment_config.json so CI sees the change
+git add insider-firehose/enrichment_config.json
+git commit -m "firehose: enrichment off (or on)"
+git push
+```
+
+### One-off via GitHub Actions
+
+Actions → Insider Firehose → **Run workflow** → set `enrich` input to `on` or `off`. This overrides the config file for this single run without changing the saved default.
 
 ---
 
@@ -120,14 +200,32 @@ To verify, run `review-investment-screenshot/scripts/insider_ratio.py TICKER --w
 
 GitHub Actions auto-commits the `form4_state.json` checkpoint every run. If you see "no state changes to commit" repeatedly with no new alerts, the EDGAR feed might be cached. Force a fresh run via workflow_dispatch.
 
+### Enrichment missing from alerts (v2.1)
+
+If alerts arrive as basic format (no 🏢 / 📈 / 📊 / ⭐ blocks):
+1. Check `enrichment_config.json` — is `"enabled": true`?
+2. Check workflow run log for `[INFO] Pulling EDGAR Form 4 feed... (enrich=ON)`
+   - `enrich=DISABLED` → config file or env var is off
+   - `enrich=UNAVAILABLE` → yfinance failed to import (workflow logs will show)
+3. Look for `[ENRICH-WARN]` or `[ENRICH-FAIL]` lines per ticker — yfinance occasionally rate-limits on micro-caps. Other tickers in the same batch should still enrich.
+
+The enrichment pipeline is **deliberately non-fatal**: any failure falls back to v2.0 basic format. You'll never lose an alert because enrichment broke.
+
+### Too noisy with enrichment scores
+
+The Smart Money Score is interpretive — alerts still fire regardless of score. If you want to filter by score:
+- Currently no built-in filter. Easiest: skim and ignore ⭐ / ▫️ entries.
+- v2.2 will add `FORM4_MIN_SCORE` env var (e.g. only push score ≥ 5).
+
 ---
 
 ## Costs
 
 - SEC EDGAR API: **$0** (public, free, no key)
-- GitHub Actions: **$0** on public repos (≈ 30 min/day of compute)
+- yfinance (v2.1 enrichment): **$0** (Yahoo Finance unofficial — no key, occasional rate limits)
+- GitHub Actions: **$0** on public repos (≈ 30 min/day of compute, +1-2 min/day for yfinance calls)
 - Telegram Bot API: **$0** (always free)
-- Storage: **$0** (state file < 100 KB at cap)
+- Storage: **$0** (state file < 100 KB at cap, enrichment_config.json < 200 bytes)
 
 Total: **$0 / month**.
 
@@ -135,10 +233,25 @@ Total: **$0 / month**.
 
 ## Architecture diagram
 
-See main `README.md` Component map. This skill adds one new branch:
+See main `README.md` Component map. This skill adds one new branch (v2.1):
 
 ```
-SEC EDGAR ─[every 30 min cron]→ form4_firehose.py ─→ Telegram bot
+SEC EDGAR ─[every 30 min cron]→ form4_firehose.py
                                    │
-                                   └─ commit form4_state.json (dedup)
+                                   ├─ enrichment/ (v2.1, on by default)
+                                   │    ├─ valuation.py    ─ yfinance
+                                   │    ├─ price_action.py ─ yfinance
+                                   │    ├─ company_info.py ─ yfinance
+                                   │    ├─ score.py        ─ rubric → 0-10
+                                   │    └─ format.py       ─ Markdown render
+                                   │
+                                   ├─ commit form4_state.json (dedup)
+                                   │
+                                   └─→ Telegram bot
+                                         ↑
+                            Telegram /enrich on|off|status
+                                         │
+                       Cloudflare Worker → GitHub API
+                                         │
+                                  enrichment_config.json
 ```

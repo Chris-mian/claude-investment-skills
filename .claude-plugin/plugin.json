@@ -1,7 +1,7 @@
 {
   "name": "claude-investment-skills",
-  "version": "2.0.0",
-  "description": "15 investment skills with pre-flight methodology + Telegram alert pipeline (price-alert + Form 4 insider firehose) + optional Cloudflare Worker webhook. Bilingual EN/CN. v2.0: real-time SEC EDGAR Form 4 monitor.",
+  "version": "2.1.0",
+  "description": "15 investment skills with pre-flight methodology + Telegram alert pipeline (price-alert + Form 4 insider firehose with v2.1 auto-enrichment: P/E + 52W context + Smart Money Score) + optional Cloudflare Worker webhook. Bilingual EN/CN. Toggle enrichment via Telegram /enrich on|off.",
   "author": {
     "name": "ssurmic",
     "url": "https://github.com/ssurmic"

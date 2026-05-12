@@ -143,6 +143,9 @@
 
 | 版本 | 日期 | 亮点 |
 |---|---|---|
+| **2.1** | 2026-05-12 | **`insider-firehose` v2.1：自动 Tier-2 enrichment**。每个 alert 自动附加公司一句话简介、P/E + 市值 + 净现金 + 股息、52W 价格位置（vs 50DMA / 200DMA / 高 / 低）、0-10 Smart Money Score。默认开启；可通过 Telegram `/enrich on` / `/enrich off`（中文别名 `/enrich 开` / `/enrich 关` 也行）、CLI `firehose_cli.py`、GitHub Actions 输入参数、或 `ENRICH` 环境变量切换。Non-fatal —— yfinance 失败时自动 fallback 到 v2.0 基础格式。worker 加 fast-path 跳过 Claude（节省 token + 延迟）。 |
+| **2.0** | 2026-05-11 | **新 skill：`insider-firehose`** —— 实时 SEC EDGAR Form 4 监控 + Telegram 推送 officer/director ≥ $200k 公开市场买入。30 分钟一次 cron，仅工作日。延迟 2-5 分钟 vs openinsider 的 12-24 小时。 |
+| 1.7 | 2026-05-11 | 插件市场安装路径（与 git-clone 二选一，两个都支持）。47 个 SKILL.md 重写为 dual-mode 脚本路径解析。NEXT-STEPS 路线图 + "Who this is for / not for" 定位 + state-source 可观测性。 |
 | **1.6** | 2026-05-11 | Cloudflare Worker webhook（1-3 秒 chat 延迟）、AGENTS.md setup 编排指南、预渲染 Mermaid 图（SVG/PNG）、6 个 skill 注入 pre-flight 方法论、AGENT-TOOL-REFERENCE.md 扩展 Tool 6 + Skill Catalog |
 | 1.5 | 2026-05-10 | 首次公开发布、MIT LICENSE、INTRODUCTION.md、双语翻译、"NL 怎么触发 skill"章节、5 个对话示例 |
 | 1.4 | 2026-05-09 | macro-warning 真实数据后端（`macro_pull.py`）、ARCHITECTURE.md |
