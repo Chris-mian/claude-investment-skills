@@ -1,0 +1,27 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+FORM 8-K
+
+Trading Symbol: HYPO
+Title of each class: Common Stock, $0.001 par value per share
+Name of each exchange on which registered: The NASDAQ Global Select Market
+
+Item 1.01 Entry into a Material Definitive Agreement.
+
+On October 15, 2025, Hypothetical Inc. (the "Company") entered into a
+Strategic Partnership Agreement with NVIDIA Corporation ("NVIDIA"), pursuant
+to which NVIDIA will make a strategic investment of $500 million in the
+Company through the purchase of common stock at a price of $45.00 per share.
+
+In addition, NVIDIA and the Company entered into a Joint Development
+Agreement to collaborate on next-generation AI infrastructure solutions
+and a Master Supply Agreement for NVIDIA Blackwell GPUs.
+
+Item 3.02 Unregistered Sales of Equity Securities.
+
+The shares were sold in a private placement to NVIDIA Corporation pursuant
+to the exemption from registration provided by Section 4(a)(2) of the
+Securities Act of 1933.
+
+Item 9.01 Financial Statements and Exhibits.
+
+99.1 Press Release

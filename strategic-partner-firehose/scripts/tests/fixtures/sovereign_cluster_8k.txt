@@ -1,0 +1,24 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+FORM 8-K
+
+Trading Symbol: BIGA
+Title of each class: Class A Common Stock
+Name of each exchange on which registered: The New York Stock Exchange
+
+Item 1.01 Entry into a Material Definitive Agreement.
+
+Item 3.02 Unregistered Sales of Equity Securities.
+
+On January 5, 2026, BigAI Holdings Inc. (the "Company") closed a private
+placement of $2.5 billion of convertible preferred shares to a consortium
+of strategic and sovereign investors including NVIDIA Corporation, MGX Fund
+Management, Public Investment Fund of Saudi Arabia, and SoftBank Vision Fund.
+
+The convertible preferred shares have a conversion price of $120.50 per share.
+
+The consortium investment is intended to fund the Company's expansion of
+AI data center capacity in partnership with NVIDIA.
+
+Item 9.01 Financial Statements and Exhibits.
+
+99.1 Press Release announcing strategic investment.

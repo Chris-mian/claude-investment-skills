@@ -1,0 +1,84 @@
+name: Strategic Partner Firehose (8-K + 13D Real-Time)
+
+# Real-time SEC 8-K + SC 13D strategic-partner monitor. Detects PIPE deals,
+# joint ventures, and strategic investments from Tier-1 names (NVIDIA, MSFT,
+# SK Telecom, Samsung, TSMC, MGX, PIF, etc.) BEFORE Twitter/Substack covers them.
+#
+# Cadence: every 60 min during US business hours + 2h after close, weekdays only.
+# 8-K filings are submitted continuously through the trading day with a peak
+# right after market close (4-7pm ET).
+#
+# Cron schedule:
+#   '0 13-23 * * 1-5'  = every hour at top of hour, 13:00-23:00 UTC, Mon-Fri
+#                       = 9:00 AM - 7:00 PM ET (weekdays)
+#
+# State dedup is via committed strategic_state.json (10k accession cap).
+
+on:
+  schedule:
+    - cron: '0 13-23 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      min_mcap:
+        description: 'Minimum market cap USD (default 50_000_000 = $50M)'
+        required: false
+        default: '50000000'
+      min_amount_m:
+        description: 'Minimum deal amount in USD millions (default 50)'
+        required: false
+        default: '50'
+      test_mode:
+        description: 'Test mode (print to log, do NOT send Telegram)'
+        required: false
+        default: 'false'
+      dry_run_limit:
+        description: 'Cap number of filings processed (0 = no limit)'
+        required: false
+        default: '0'
+
+permissions:
+  contents: write  # to commit state back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        # requests = SEC EDGAR fetch
+        # yfinance = mcap/exchange filter + enrichment (cross-skill reuse)
+        run: pip install --quiet 'requests>=2.31' 'yfinance>=0.2.40'
+
+      - name: Run Strategic Partner scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          STRATEGIC_MIN_MCAP: ${{ inputs.min_mcap || '50000000' }}
+          STRATEGIC_MIN_AMOUNT_M: ${{ inputs.min_amount_m || '50' }}
+          TEST_MODE: ${{ inputs.test_mode == 'true' && '1' || '' }}
+          DRY_RUN_LIMIT: ${{ inputs.dry_run_limit || '0' }}
+          EDGAR_USER_AGENT: "ssurmiczizhao@gmail.com strategic-partner-firehose/1.0 (ci)"
+        run: |
+          python strategic-partner-firehose/scripts/partner_firehose.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          STATE_FILE="strategic-partner-firehose/scripts/strategic_state.json"
+          if [[ -n "$(git status --porcelain $STATE_FILE)" ]]; then
+            git add $STATE_FILE
+            git commit -m "partner-firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git push
+          else
+            echo "No state changes to commit."
+          fi

@@ -1,0 +1,49 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+
+FORM 8-K
+CURRENT REPORT
+
+Date of Report (Date of earliest event reported): July 15, 2024
+
+SMART Global Holdings, Inc.
+(Exact name of registrant as specified in its charter)
+
+Cayman Islands 001-38102 98-1013909
+(State or other jurisdiction of incorporation)
+
+Trading Symbol: SGH
+Title of each class: Ordinary Shares
+Name of each exchange on which registered: The NASDAQ Global Select Market
+
+Item 1.01 Entry into a Material Definitive Agreement.
+
+On July 15, 2024, SMART Global Holdings, Inc. (the "Company") entered into
+a Securities Purchase Agreement (the "Purchase Agreement") with SK Telecom
+Co., Ltd. ("SK Telecom"), pursuant to which SK Telecom has agreed to purchase
+200,000 newly designated preferred shares (the "Preferred Shares") of the
+Company for an aggregate purchase price of $200 million (the "Investment").
+
+The Preferred Shares will be convertible into ordinary shares of the Company
+at a conversion price of $32.81 per Preferred Share, subject to customary
+adjustments.
+
+This strategic investment will accelerate the Company's end-to-end AI
+infrastructure solutions and deepen the strategic partnership between
+SMART Global Holdings and SK Telecom in AI data center deployment.
+
+Item 3.02 Unregistered Sales of Equity Securities.
+
+The information set forth in Item 1.01 of this Current Report on Form 8-K
+is incorporated by reference into this Item 3.02. The Preferred Shares were
+sold in a private placement to SK Telecom in reliance on the exemption from
+registration provided by Section 4(a)(2) of the Securities Act of 1933.
+
+Item 7.01 Regulation FD Disclosure.
+
+On July 15, 2024, the Company issued a press release announcing the strategic
+investment. A copy of the press release is attached hereto as Exhibit 99.1.
+
+Item 9.01 Financial Statements and Exhibits.
+
+Exhibit 99.1 - Press Release issued by SMART Global Holdings on July 15, 2024

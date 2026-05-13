@@ -1,0 +1,19 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+FORM 8-K
+
+Trading Symbol: XYZ
+
+Item 5.02 Departure of Directors or Certain Officers; Election of Directors;
+Appointment of Certain Officers; Compensatory Arrangements of Certain Officers.
+
+On May 12, 2026, John Smith resigned as Chief Financial Officer of the Company,
+effective immediately, to pursue other opportunities. The Company has appointed
+Jane Doe as the interim Chief Financial Officer.
+
+There is no disagreement between Mr. Smith and the Company.
+
+Item 9.01 Financial Statements and Exhibits.
+
+(d) Exhibits
+
+99.1 Press release dated May 12, 2026.

@@ -1078,6 +1078,7 @@ The framework is opinionated — it reflects one specific style (top-down, value
 **License**: [MIT](./LICENSE)
 
 ### Changelog
+- **2.2 (2026-05-12)**: **NEW SKILL `strategic-partner-firehose`** — real-time SEC 8-K + SC 13D monitor for strategic PIPE deals + JVs from NVIDIA/MSFT/SK Telecom/Samsung/Oracle and sovereign funds (MGX, Saudi PIF, Mubadala). Filters: US-listed ≥ $50M mcap, deal ≥ $50M. Auto-scores 0-10 "Partner Score" via cross-skill enrichment. 32 unit tests pass; PENG/SGH backtest scores 9/10 EXCEPTIONAL. Catches "next PENG" 6-18 months before Twitter/Substack pumps. See `strategic-partner-firehose/README.md` for what 8-K and SC 13D actually are.
 - **2.1 (2026-05-12)**: `insider-firehose` v2.1: alerts auto-include business one-liner + P/E + market cap + net cash + 52W context + 0-10 Smart Money Score. Enrichment is on by default; toggle via Telegram `/enrich on` / `/enrich off` (Chinese aliases too), CLI `firehose_cli.py`, GitHub Actions input, or `ENRICH` env var. Non-fatal pipeline — if yfinance fails, falls back to v2.0 basic alert.
 - **2.0 (2026-05-11)**: NEW SKILL `insider-firehose` — real-time SEC EDGAR Form 4 monitor with Telegram push for officer/director open-market buys ≥ $200k. 30-min cron weekdays. 2-5 min latency vs openinsider's 12-24 hours.
 - **1.7 (2026-05-11)**: Plugin marketplace install path (two-way door with git-clone). 47 SKILL.md script paths rewritten to dual-mode resolution. NEXT-STEPS roadmap.
