@@ -90,7 +90,7 @@
       "condition": {
         "op": "rise_intraday",
         "pct": 2,
-        "prev_close_at_check": 193.84
+        "prev_close_at_check": 186.83
       },
       "note": "Set via Telegram bot",
       "created": "2026-05-11",
@@ -130,7 +130,7 @@
       "ticker": "NOK",
       "condition": {
         "op": "below_ma_50",
-        "ma_at_check": 9.6934
+        "ma_at_check": 9.7916
       },
       "note": "NOK T2 \u52a0\u4ed3 \u2014 50DMA \u8dcc\u7834\uff08\u6df1\u5ea6\u56de\u8c03\u673a\u4f1a\uff09",
       "created": "2026-05-11",
@@ -143,7 +143,7 @@
       "ticker": "ORCL",
       "condition": {
         "op": "above_ma_200",
-        "ma_at_check": 210.74425
+        "ma_at_check": 210.4528
       },
       "note": "ORCL trend-turn \u4fe1\u53f7 \u2014 200DMA $211 \u7a81\u7834\uff08\u91cd\u65b0\u8bc4\u4f30\uff09",
       "created": "2026-05-11",
@@ -183,7 +183,7 @@
       "condition": {
         "op": "rise_intraday",
         "pct": 5,
-        "prev_close_at_check": 322.05
+        "prev_close_at_check": 308.05
       },
       "note": "POWL \u5355\u65e5\u66b4\u6da8 5%+ \u2014 \u770b\u662f\u5426\u53c8\u6709\u65b0 hyperscaler \u8ba2\u5355\u516c\u544a",
       "created": "2026-05-11",
@@ -264,13 +264,17 @@
       "ticker": "NOK",
       "condition": {
         "op": "rise_intraday",
-        "pct": 7
+        "pct": 7,
+        "prev_close_at_check": 13.17
       },
       "note": "NOK \u5355\u65e5\u66b4\u6da8 7%+ \u2014 \u53ef\u80fd\u662f hyperscaler \u65b0\u8ba2\u5355 / NVIDIA AI-RAN \u65b0\u6d88\u606f / Q2 earnings \u5077\u8dd1",
       "created": "2026-05-12",
       "created_price": 13.17,
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-13T16:06:49.142091+00:00",
+      "fired_at_price": 14.154999732971191,
+      "fired_reason": "intraday rise 7.5% from prev close $13.17 (threshold: +7%)"
     }
   ]
 }
