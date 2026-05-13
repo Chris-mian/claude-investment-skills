@@ -9,18 +9,20 @@ name: 13F Firehose (Famous Funds Daily)
 # Filings appear throughout the deadline week. Most large funds file 2-3 days
 # before the deadline (creating a flurry on Feb 12-14, May 13-15, etc.).
 #
-# We run TWICE daily on weekdays to catch same-day filings:
-#   - 21:00 UTC = 5 PM ET  (catches filings up through market close + 1h)
-#   - 01:00 UTC = 9 PM ET  (catches late-day post-market filings)
+# We run THREE TIMES daily on weekdays during US business hours:
+#   - 13:00 UTC = 9 AM ET  — catches overnight & pre-market filings
+#   - 17:00 UTC = 1 PM ET  — catches midday filings
+#   - 21:00 UTC = 5 PM ET  — catches post-close filings (1h after 4pm close)
 # SEC EDGAR doesn't accept weekend submissions, so we skip Sat/Sun.
 #
 # State dedup is via committed state.json (per-fund last-seen accession).
 
 on:
   schedule:
-    # Twice daily, weekdays only
-    - cron: '0 21 * * 1-5'  # 5 PM ET / 21:00 UTC (4 PM during DST)
-    - cron: '0 1 * * 2-6'   # 9 PM ET / 01:00 UTC next day (catches late filings)
+    # Three times daily, weekdays only (US business hours)
+    - cron: '0 13 * * 1-5'  # 9 AM ET / 13:00 UTC — morning
+    - cron: '0 17 * * 1-5'  # 1 PM ET / 17:00 UTC — midday
+    - cron: '0 21 * * 1-5'  # 5 PM ET / 21:00 UTC — post-close
   workflow_dispatch:
     inputs:
       priority_max:

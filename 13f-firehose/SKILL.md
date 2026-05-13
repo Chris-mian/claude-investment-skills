@@ -19,9 +19,10 @@ Edit `scripts/fund_registry.py` to add/remove.
 
 ## Cron
 
-Twice daily, weekdays only:
-- `21:00 UTC` (5 PM ET) — afternoon filings
-- `01:00 UTC` next day (9 PM ET) — late-day filings
+Three times daily, weekdays only (US business hours):
+- `13:00 UTC` (9 AM ET) — morning, catches overnight + pre-market filings
+- `17:00 UTC` (1 PM ET) — midday filings
+- `21:00 UTC` (5 PM ET) — post-close filings
 
 13F deadlines: **Feb 14 / May 15 / Aug 14 / Nov 14** (45 days after quarter-end).
 
