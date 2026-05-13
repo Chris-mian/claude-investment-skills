@@ -1,0 +1,50 @@
+%% Firehose 架构图 (v2.4) —— 中文版
+%% 三条独立 discovery firehose, 通过 composite 信号交叉验证.
+%% 源文件: 改完跑 `bash scripts/render-diagrams.sh` 重新渲染 SVG/PNG.
+flowchart TB
+    classDef sec fill:#1f6feb,color:#fff,stroke:#0d419d,stroke-width:2px
+    classDef fire fill:#fff,color:#000,stroke:#1f6feb,stroke-width:2px
+    classDef path fill:#fffbe6,color:#000,stroke:#d4a017,stroke-width:1px
+    classDef tg fill:#2da6df,color:#fff,stroke:#1a73a8,stroke-width:2px
+    classDef mega fill:#e63946,color:#fff,stroke:#9d1f2b,stroke-width:3px
+
+    SEC[("SEC EDGAR<br/>(公开 · 免费 · 实时)")]:::sec
+
+    subgraph FH1["insider-firehose (每 30 分钟)"]
+        F1["Form 4 atom feed<br/>高管 / 董事买卖"]:::fire
+        F1A["过滤: code = P (公开市场买入)<br/>金额 ≥ $200k<br/>角色 ≠ 纯 10% 持有人"]:::path
+    end
+
+    subgraph FH2["strategic-partner-firehose (每 30 分钟)"]
+        F2["8-K + SC 13D atom feed"]:::fire
+        F2A["路径 A: Registry 命中<br/>NVIDIA / SK Telecom / MGX /<br/>Microsoft / Samsung / TSMC / ..."]:::path
+        F2B["路径 B: Theme 分类器 (v2.4)<br/>AI / 数据中心 / 'leading hyperscaler' /<br/>'major U.S. technology company'<br/>(抓 POWL 类匿名客户)"]:::path
+    end
+
+    subgraph EN["enrichment/ (共享模块)"]
+        E1["valuation.py<br/>P/E · 市值 · 净现金"]
+        E2["price_action.py<br/>50DMA · 200DMA · 52W"]
+        E3["score.py<br/>0-10 Smart Money Score"]
+    end
+
+    COMP{{"composite.py<br/>同一 ticker 在 30 天内<br/>触发两个 firehose?"}}
+
+    TG["Telegram bot<br/>$TELEGRAM_BOT_TOKEN"]:::tg
+    MEGA["🚨🚨🚨 MEGA SIGNAL<br/>insider + partner 双重确认"]:::mega
+
+    SEC --> F1
+    SEC --> F2
+    F1 --> F1A --> EN
+    F2 --> F2A --> EN
+    F2 --> F2B --> EN
+
+    F1A -.记录.-> COMP
+    F2A -.记录.-> COMP
+    F2B -.记录.-> COMP
+
+    EN --> TG
+    COMP --> MEGA
+    MEGA --> TG
+
+    classDef sub fill:#f7f9fc,color:#000,stroke:#cdd5e0,stroke-width:1px
+    class FH1,FH2,EN sub

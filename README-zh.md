@@ -186,6 +186,127 @@ bash ~/.claude/skills/setup.sh
 
 ---
 
+## 🔥 三条 Discovery Firehose —— *在 Twitter 之前抓到下一只股票*
+
+### 这是在解决什么问题
+
+每次一只票 10x，剧本都一样:
+
+> ❌ **第 0 天**: SEC filing 公开。推特上没人注意。
+> ❌ **第 30 天**: 彭博发个短讯。
+> ❌ **第 60 天**: 第一篇付费 Substack 发文。
+> ❌ **第 120 天**: Reddit 开始讨论。
+> ❌ **第 180-540 天**: Twitter KOL 发推。**K 线已经抛物线了，你买在顶部。**
+
+信息一直是公开免费的。**瓶颈不是访问权限 —— 是速度。**
+
+### 这个工具做什么
+
+三条 SEC EDGAR firehose 在 GitHub Actions 上作为 cron 跑, **每 30 分钟一次**, 工作日早 9 点到晚 7:30 美东。它们扫**每一份 SEC 发布的 filing**, 提取真有 alpha 的, 用估值 + 价格行动 enrich, 0-10 打分, 推送 Telegram。
+
+**你不需要告诉它看什么。它告诉你看什么。**
+
+![Firehose 架构](diagrams/firehoses-zh.svg)
+
+### 三个真实案例 —— 看清 alpha 是怎么"漏"出去的
+
+这不是假设。这是真实的 filing + 真实的价格。
+
+#### 案例 1: CoreWeave (CRWV) —— $40 到 $187 / 3 个月
+
+AI 时代最戏剧性的 IPO 故事。8-K 披露 OpenAI 为战略股东这件事, 在 EDGAR 上**IPO 后 2 天**就有了。第一篇 Substack **5 周后**才发。等 Twitter 上图表抛物线时, **已经 +367%**。
+
+![CRWV alpha 传导](diagrams/timeline-crwv-zh.svg)
+
+| 来源 | 日期 | 价格 | 距 SEC 滞后 |
+|---|---|---|---|
+| **SEC 8-K Item 3.02 OpenAI $350M PIPE** | 2025-03-31 | **$40-48** | 0 天 |
+| 彭博文章 | 2025-04-15 | $50 | +15 天 |
+| 第一篇 Substack | 2025-05-08 | $54 | +38 天 |
+| Reddit 炒作 | 2025-05-19 | $80 | +49 天 |
+| Twitter 抛物线 ATH | 2025-06-16 | **$187** | +77 天, **+367%** |
+
+#### 案例 2: Powell Industries (POWL) —— 匿名客户, 7 天 +73%
+
+一家 50 年历史的工业公司, 卖配电柜的。无聊。然后一份 8-K 宣布"*公司史上最大订单, $400M+, 客户是某美国大型科技公司*"。客户**被刻意隐去** —— 这是 hyperscaler 大单的典型做法。
+
+简单的 scanner 会错过, 因为文本里没有 "NVIDIA" / "Microsoft" / "Amazon"。**v2.4 路径 B (主题分类器) 靠关键词密度抓到**: "behind-the-meter" + "multi-gigawatt" + "data center" + "largest order in company history" 评分 10/10。
+
+![POWL alpha 传导](diagrams/timeline-powl-zh.svg)
+
+| 来源 | 日期 | 价格 | 距 SEC 滞后 |
+|---|---|---|---|
+| **SEC 8-K Item 1.01 + 8.01 (匿名客户)** | 2026-05-06 | **$186** | 0 天 |
+| Crux Capital 推文 | 2026-05-08 | $202 | +2 天 (+8%) |
+| Kaduna 推文 | 2026-05-12 | **$322** | +6 天, **+73%** |
+
+#### 案例 3: Penguin Solutions (PENG, 原 SGH) —— 22 个月闷烧
+
+最长的导火索。SK Telecom $200M PIPE 优先股在 8-K Item 3.02 上**躺了 22 个月**才被 Twitter 发现。有耐心的资金 +150%。
+
+![PENG alpha 传导](diagrams/timeline-peng-zh.svg)
+
+| 来源 | 日期 | 价格 | 距 SEC 滞后 |
+|---|---|---|---|
+| **SEC 8-K Item 3.02 SK Telecom $200M** | 2024-07-15 | **$20** | 0 天 |
+| 公开改名 SGH → PENG | 2024-10 | $22 | +3 个月 |
+| CES 2025 合作官宣 | 2025-01-09 | $22 | +6 个月 |
+| Q2 战略转向 inference AI | 2026-04-01 | $18-30 | +20 个月 |
+| 第一篇 Substack | 2026-05-08 | $44 | +21.5 个月 |
+| Kaduna 推文 | 2026-05-12 | **$50** | +22 个月, **+150%** |
+
+---
+
+### 三条 firehose 各干什么
+
+| Firehose | 扫什么 | 发现什么 |
+|---|---|---|
+| **`insider-firehose`** | SEC Form 4 atom feed | 高管 / 董事公开市场买入 ≥ $200k (只看 code "P", 不含 RSU 归属) |
+| **`strategic-partner-firehose`** | SEC 8-K + SC 13D atom feed | **路径 A**: 具名 Tier-1 战略投资人 (NVIDIA, MSFT, SK Telecom, Samsung, MGX, PIF, …)。**路径 B**: 主题分类器抓 POWL 类**匿名客户**大单 |
+| **`composite.py`** (共享) | 上面两条 firehose 的 alert log | 同一 ticker 30 天内触发两条 → 🚨🚨🚨 **MEGA SIGNAL** (罕见, < 1% 的 alert) |
+
+### 怎么用
+
+```
+   1. Fork 这个 repo (一次)
+   2. 在 GitHub Secrets 设 TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID
+   3. 启用 GitHub Actions workflows
+   4. ─── 然后什么都不用做 ───
+   5. SEC 一有动静, Telegram 就响
+   6. (可选) 跟 Claude Code 聊推送过来的那些 ticker
+```
+
+**这是 cron 驱动, 不是 chat 驱动。** Firehose 自己不需要任何自然语言命令 —— 它们在后台静默运行。NL 只是用来**调查 + 决定**它们推送过来的东西:
+
+```
+"analyze TICKR"                  → 触发 analyze-stock
+"TICKR $X 能买吗"                  → 触发 analyze-stock + macro-warning 闸门
+"TICKR 期权墙"                     → 触发 option-wall-analysis
+"找下一个 PENG"                    → 触发 find-untapped-thesis
+"TICKR 跌到 $X 通知我"              → 触发 price-alert
+```
+
+### 这个工具**不是**什么
+
+- ❌ 不是交易 bot —— 它不下单
+- ❌ 不是回测引擎 —— 历史回放仅限基于 fixture 的单元测试
+- ❌ 不是 tick 级流数据 —— SEC EDGAR 没 WebSocket; 我们每 30 分钟轮询 atom feed (已经比 Twitter 快 6-540 倍)
+- ❌ 不是"秘密优势" —— Substack 作者也在读同一个 EDGAR。我们只是把轮询自动化, 你不需要付 $20/月订阅每个作者
+
+### 成本
+
+| 组件 | 成本 |
+|---|---|
+| SEC EDGAR (8-K, 13D, Form 4 feeds) | $0 (公开, 免费, 无需 API key) |
+| yfinance 估值数据 (P/E, mcap, 52W) | $0 |
+| GitHub Actions cron | $0 (公开 repo) |
+| Telegram bot | $0 |
+| **总计** | **$0 / 月** |
+
+你唯一的"成本"是在 GitHub 上 fork 一下 + 5 分钟设 Telegram。
+
+---
+
 ## 🔍 状态源 —— 每样东西住在哪 + 怎么查
 
 每一份 state 都有**唯一权威来源**。知道去哪看，"bot 不工作了"这种谜题立刻变成 30 秒诊断。**任何状态都能用一条 `cat` / `curl` / `gh` / `wrangler` 命令读到** —— 没有黑箱。
