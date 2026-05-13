@@ -1,0 +1,34 @@
+UNITED STATES SECURITIES AND EXCHANGE COMMISSION
+FORM 8-K
+CURRENT REPORT
+
+Trading Symbol: POWL
+Title of each class: Common Stock, $0.01 par value per share
+Name of each exchange on which registered: The NASDAQ Global Select Market
+
+Item 1.01 Entry into a Material Definitive Agreement.
+Item 8.01 Other Events.
+
+On May 6, 2026, Powell Industries, Inc. (the "Company") announced that
+it has been awarded the largest order in company history, valued at over
+$400 million, for the first phase of a multi-year, multi-gigawatt
+behind-the-meter power infrastructure project supporting greenfield
+AI data center buildouts being constructed for a major U.S. technology
+company.
+
+The order encompasses Powell's integrated switchgear, modular power
+distribution, and data center power systems. The customer is a leading
+hyperscaler and the project is expected to span multiple phases through
+fiscal 2028.
+
+The Company expects this contract to increase its commercial and industrial
+backlog by approximately 22%, bringing total backlog to approximately
+$1.8 billion. The Company is evaluating $70-100 million in capital
+expenditures to expand production capacity to meet the demand.
+
+This represents a transformational multi-year agreement that positions
+Powell as a preferred supplier for AI infrastructure power systems.
+
+Item 9.01 Financial Statements and Exhibits.
+
+99.1 Press Release dated May 6, 2026.

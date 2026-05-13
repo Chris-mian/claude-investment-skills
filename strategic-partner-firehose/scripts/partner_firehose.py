@@ -90,6 +90,14 @@ from composite import (  # noqa: E402
     mark_composite_sent, format_composite_alert,
 )
 
+# v2.4: theme classifier (catches POWL-style anonymous-customer signals)
+# v2.4: 题材分类器 (抓 POWL 这种匿名客户大单)
+from classifier import compute_theme_score  # noqa: E402
+
+# Theme score threshold to fire alert when registry didn't match
+# 当 registry 没匹配, theme score 达到这个值就 fire
+THEME_FIRE_THRESHOLD = 6
+
 # ─── Cross-skill enrichment (optional, non-fatal) ───────────────────────
 # 跨 skill enrichment (可选, 非致命)
 _ENRICH_AVAILABLE = False
@@ -236,9 +244,17 @@ def analyze_filing(meta: FilingMeta, body: str) -> PartnerSignal | None:
     if meta.form_type == "8-K" and is_noise_filing(body):
         return None
 
-    # ─ Step 2: Strategic investor scan ─
+    # ─ Step 2a: Strategic investor scan (Path A — registry-based) ─
     investors = find_strategic_investors(body)
-    if not investors:
+
+    # ─ Step 2b: Theme/classifier scan (Path B — anonymous-customer catch) ─
+    # v2.4: catches POWL-style "$400M from a major U.S. technology company"
+    # 这条路径抓 POWL 这种没点名客户但题材清晰的大单
+    theme = compute_theme_score(body)
+
+    # Fire if EITHER path triggers (registry OR theme score ≥ 6)
+    # 任一 path 触发就 fire
+    if not investors and theme["score"] < THEME_FIRE_THRESHOLD:
         return None
 
     # ─ Step 3: Extract structured data ─
@@ -281,6 +297,10 @@ def analyze_filing(meta: FilingMeta, body: str) -> PartnerSignal | None:
         deal_type=deal_type,
         filing_link=meta.link,
         accession=meta.accession,
+        # v2.4: theme info
+        theme_score=theme["score"],
+        theme_primary=theme["primary_theme"],
+        theme_categories=theme["categories"],
     )
 
 
@@ -299,32 +319,54 @@ def format_alert(signal: PartnerSignal, enriched: dict | None = None) -> str:
     company = enriched.get("company") or {}
     score_data = enriched.get("score") or {}
 
-    # Header
-    top_tier, top_canonical = signal.investors[0]
-    tier_emoji = TIER_EMOJI.get(top_tier, "🤝")
+    # v2.4: Two header styles depending on detection path
+    # 两种 header 样式取决于命中路径
 
-    # Format primary investor name nicely
-    top_name = top_canonical.replace("_", " ")
+    if signal.investors:
+        # Path A: registry-based (named investor)
+        # 命中具名投资人
+        top_tier, top_canonical = signal.investors[0]
+        tier_emoji = TIER_EMOJI.get(top_tier, "🤝")
+        top_name = top_canonical.replace("_", " ")
 
-    lines = [
-        f"🤝🟢 *STRATEGIC PARTNER INVESTMENT* — ${signal.amount_usd_m:,.0f}M",
-        "",
-        f"*Ticker*: `{signal.ticker}`",
-        f"{tier_emoji} *{top_name}* ({top_tier})",
-    ]
-
-    # Show additional investors if any
-    if len(signal.investors) > 1:
-        others = [f"{TIER_EMOJI.get(t, '🤝')} {c.replace('_', ' ')}"
-                  for t, c in signal.investors[1:]]
-        lines.append(f"  + {', '.join(others)}")
+        lines = [
+            f"🤝🟢 *STRATEGIC PARTNER INVESTMENT* — ${signal.amount_usd_m:,.0f}M",
+            "",
+            f"*Ticker*: `{signal.ticker}`",
+            f"{tier_emoji} *{top_name}* ({top_tier})",
+        ]
+        if len(signal.investors) > 1:
+            others = [f"{TIER_EMOJI.get(t, '🤝')} {c.replace('_', ' ')}"
+                      for t, c in signal.investors[1:]]
+            lines.append(f"  + {', '.join(others)}")
+    else:
+        # Path B: theme-based (anonymous customer, e.g. POWL-style)
+        # 题材命中, 客户匿名 (POWL 类型)
+        lines = [
+            f"🏭🟢 *AI INFRASTRUCTURE SIGNAL* — ${signal.amount_usd_m:,.0f}M",
+            "",
+            f"*Ticker*: `{signal.ticker}`",
+            f"🎯 *Theme*: {signal.theme_primary}",
+            f"_Customer not named in filing (typical for hyperscaler deals)_",
+        ]
+        # Show top 3 theme categories
+        cats = signal.theme_categories
+        if cats:
+            top_cats = list(cats.items())[:3]
+            for cat, phrases in top_cats:
+                lines.append(f"  ⚡ {cat}: {', '.join(phrases[:3])}")
 
     lines.extend([
+        "",
         f"_Filing: {signal.form_type}"
         + (f", Item {','.join(signal.items)}" if signal.items else "") + "_",
         "",
         f"*Type*: {signal.deal_type}",
     ])
+    # If both paths hit, show theme tag for extra signal
+    # 两条路径都命中时, 显示 theme tag 作为额外信号
+    if signal.investors and signal.theme_score >= THEME_FIRE_THRESHOLD:
+        lines.append(f"*Theme*: {signal.theme_primary} (score {signal.theme_score}/10)")
 
     if signal.conversion_price is not None:
         lines.append(f"*Conversion @*: ${signal.conversion_price:.2f}")
@@ -518,23 +560,39 @@ def main() -> int:
                 # 记录这次 alert + 看 insider firehose 最近是否也对该 ticker
                 # 触发过. 若是, 发 MEGA SIGNAL.
                 try:
-                    top_tier, top_canonical = signal.investors[0]
+                    # v2.4: handle theme-only signals (no named investor)
+                    # v2.4: 处理纯题材命中的情况 (没有具名投资人)
+                    if signal.investors:
+                        top_tier, top_canonical = signal.investors[0]
+                        investor_extra = {
+                            "investor": top_canonical,
+                            "tier": top_tier,
+                            "deal_type": signal.deal_type,
+                        }
+                        own_summary_prefix = top_canonical.replace("_", " ")
+                    else:
+                        # Theme-only signal
+                        investor_extra = {
+                            "investor": "theme-only",
+                            "tier": "theme",
+                            "theme_primary": signal.theme_primary,
+                            "theme_score": signal.theme_score,
+                            "deal_type": signal.deal_type,
+                        }
+                        own_summary_prefix = f"AI Infrastructure ({signal.theme_primary})"
+
                     log_alert(
                         firehose_type="partner",
                         ticker=signal.ticker,
                         amount_usd=signal.amount_usd_m * 1e6,
-                        extra={
-                            "investor": top_canonical,
-                            "tier": top_tier,
-                            "deal_type": signal.deal_type,
-                        },
+                        extra=investor_extra,
                     )
 
                     if not is_composite_already_sent(signal.ticker):
                         composite = check_composite(signal.ticker, own_type="partner")
                         if composite:
                             own_summary = (
-                                f"{top_canonical.replace('_', ' ')} "
+                                f"{own_summary_prefix} "
                                 f"${signal.amount_usd_m:,.0f}M "
                                 f"({signal.deal_type})"
                             )

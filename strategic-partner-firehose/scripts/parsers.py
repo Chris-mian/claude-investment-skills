@@ -169,6 +169,11 @@ class PartnerSignal:
     deal_type: str = "Unknown"
     filing_link: str = ""
     accession: str = ""
+    # v2.4: theme classification (catches anonymous-customer signals)
+    # v2.4: 题材分类 (抓匿名客户信号)
+    theme_score: int = 0                # 0-10 from classifier.py
+    theme_primary: str = "None"          # "AI Data Center", "Hyperscaler Contract", ...
+    theme_categories: dict = field(default_factory=dict)  # raw category hits
 
 
 # ─── Parsing functions / 解析函数 ───────────────────────────────────────

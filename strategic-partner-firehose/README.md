@@ -1,6 +1,8 @@
 # Strategic Partner Firehose
 
-**Find the next CoreWeave, the next PENG, the next $40 IPO that goes to $187 — by reading the same SEC filings hedge funds read, automatically, every 30 minutes.**
+**Find the next CoreWeave, the next PENG, the next POWL — by reading the same SEC filings hedge funds read, automatically, every 30 minutes.**
+
+This skill uses **two parallel detection paths**, so it catches both named-investor deals (PENG/CRWV) AND anonymous-hyperscaler deals (POWL). Most retail-facing screeners only do one.
 
 ---
 
@@ -43,15 +45,39 @@ Date         Source                Action
 
 ---
 
+## Two parallel detection paths (v2.4)
+
+The big problem with naive "scan for NVIDIA in filings" tools is that **the most interesting filings often hide the customer name**. Hyperscalers don't want their suppliers public, so 8-Ks frequently say "a major U.S. technology company" or "a leading hyperscaler" instead of "Microsoft" or "Amazon."
+
+We solve this with two independent paths:
+
+### Path A — Registry-based (named investor detected)
+```
+Filing mentions a known entity from our investor registry?
+  → Score the deal by investor tier (NVIDIA = tier_1, MGX = sovereign, etc.)
+  → Fire 🤝 STRATEGIC PARTNER INVESTMENT alert
+```
+**Catches**: PENG/SK Telecom, CRWV/OpenAI, ORCL/Stargate cluster, RDDT/NVIDIA pre-IPO
+
+### Path B — Theme classifier (anonymous customer, theme-rich)
+```
+Filing body has high density of AI/datacenter/hyperscaler keywords?
+  → Compute theme score 0-10 across 7 keyword categories
+  → If score ≥ 6 → Fire 🏭 AI INFRASTRUCTURE SIGNAL alert
+```
+**Catches**: POWL/anonymous hyperscaler $400M data center order, BE/anonymous AI fuel-cell deals, GEV gas turbines for "Fortune 100 customer"
+
+### Either path fires → alert. Both fire → bonus theme tag in alert.
+
 ## What this skill watches
 
 | Signal | What we look for |
 |---|---|
 | **8-K Item 1.01** | "Entry into Material Definitive Agreement" — JVs, master supply agreements, OpenAI-style strategic deals |
-| **8-K Item 3.02** | "Unregistered Sales of Equity Securities" — **PIPE deals** (this is how SK Telecom invested $200M in PENG and how OpenAI got 8.75M CRWV shares) |
-| **8-K Item 7.01** | "Reg FD Disclosure" — press release attached (we read it) |
-| **8-K Item 8.01** | "Other Events" — catch-all for material customer wins, big contracts |
-| **SC 13D** | Active >5% beneficial ownership filings (this is where you see "NVIDIA owns 7% of XYZ") |
+| **8-K Item 3.02** | "Unregistered Sales of Equity Securities" — **PIPE deals** (SK Telecom $200M in PENG; OpenAI 8.75M shares in CRWV) |
+| **8-K Item 7.01** | "Reg FD Disclosure" — press release attached (we read the exhibit) |
+| **8-K Item 8.01** | "Other Events" — catch-all for material customer wins, big contracts (POWL $400M order) |
+| **SC 13D** | Active >5% beneficial ownership (NVIDIA 7% of CRWV, Microsoft stakes, etc.) |
 
 ### Strategic investors we recognize
 
@@ -64,6 +90,34 @@ Date         Source                Action
 **Smart-money VC**: Andreessen Horowitz, Lux Capital, Sequoia, Founders Fund, Khosla Ventures, Coatue, Tiger Global
 
 Each entity has 2-5 SEC-filing aliases (e.g. "NVIDIA Corporation" vs "Nvidia Corp" vs "NVentures") — full regex matching in `scripts/investor_registry.py`.
+
+---
+
+## The POWL case — why theme detection matters
+
+Powell Industries (POWL) makes electrical switchgear. For 50 years it was a boring industrial company trading at $40 with mid-single-digit growth.
+
+Then in May 2026 it announced (via 8-K Item 1.01) the **largest order in company history — over $400 million** — for a multi-gigawatt behind-the-meter power infrastructure project supporting AI data center buildouts for **"a major U.S. technology company"** (customer name redacted).
+
+Within a week the stock went from $186 to $322. **+73% in 7 trading days.**
+
+A registry-only scanner would have **completely missed this 8-K**:
+- ❌ No NVIDIA / Microsoft / Samsung mention
+- ❌ Customer name redacted ("major U.S. technology company")
+- ❌ Powell Industries itself is not in any "AI" investor list
+
+But the theme classifier scores this filing **10/10**:
+- ✅ "largest order in company history" (magnitude signal)
+- ✅ "multi-gigawatt", "behind-the-meter", "data center" (datacenter category)
+- ✅ "major U.S. technology company" (hyperscaler-proxy)
+- ✅ "AI data center buildouts" (core AI)
+- ✅ "switchgear", "data center power" (energy)
+- ✅ "multi-year contract", "transformational" (magnitude)
+- ✅ "preferred supplier" (event type)
+
+**Result**: AI INFRASTRUCTURE SIGNAL alert fires. You buy at $186 instead of finding out at $322 via Twitter.
+
+This is exactly the gap the v2.4 dual-path architecture closes.
 
 ---
 
@@ -285,6 +339,7 @@ strategic-partner-firehose/
 
 ## Versioning
 
+- **2.4 (2026-05-12)**: **Theme classifier added (`scripts/classifier.py`)** — dual-path detection. Path A (registry) catches named-investor deals; Path B (theme score ≥ 6) catches anonymous-hyperscaler deals like POWL's $400M data center order. New `_PartnerSignal.theme_score/theme_primary/theme_categories` fields. 36 unit tests pass; POWL fixture scores 10/10. Whitespace normalization (collapse \\s+ → single space) makes regex robust to HTML-stripped filings with mid-phrase newlines.
 - **2.3 (2026-05-12)**: Composite signal detector. Both firehoses now cross-check each other; same-ticker fire within 30 days = MEGA SIGNAL alert. Cron updated to 30-min cadence aligning with insider-firehose. README rewritten with concrete CoreWeave (CRWV) backtest showing $40 IPO → $187 ATH path detectable on 2025-03-31 8-K Item 1.01.
 - **2.2 (2026-05-12)**: Initial release. 32 unit tests pass. Real backtest validates PENG/SGH (score 9/10), sovereign cluster (10/10), noise correctly filtered.
 

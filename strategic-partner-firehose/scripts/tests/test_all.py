@@ -33,6 +33,7 @@ from parsers import (  # noqa: E402
     parse_atom_feed, KEY_8K_ITEMS,
 )
 from analysis import compute_partner_score  # noqa: E402
+from classifier import compute_theme_score  # noqa: E402
 import filters  # noqa: E402
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -318,6 +319,55 @@ class TestAnalysis(unittest.TestCase):
         )
         for key in ("score", "raw", "factors", "verdict"):
             self.assertIn(key, result)
+
+
+# ─── classifier (theme detector) ────────────────────────────────────────
+
+class TestClassifier(unittest.TestCase):
+    """Test theme-based classifier (v2.4 — catches anonymous-customer signals)."""
+
+    def test_powl_anonymous_customer_detected(self):
+        """
+        POWL fixture: $400M order from 'major U.S. technology company' (anonymous).
+        Registry would MISS this. Theme classifier should CATCH it with high score.
+        """
+        body = _load_fixture("powl_aidc_anonymous_8k.txt")
+
+        # 1. Registry should NOT find any specific investor
+        # 1. Registry 不应该找到具名投资人
+        investors = find_strategic_investors(body)
+        self.assertEqual(investors, [],
+                         "Registry should NOT match anonymous customer")
+
+        # 2. Theme classifier SHOULD score this high
+        # 2. 题材分类器应该给高分
+        theme = compute_theme_score(body)
+        self.assertGreaterEqual(theme["score"], 6,
+                                f"Theme score too low: {theme}")
+        self.assertTrue(theme["ai_relevant"])
+        self.assertTrue(theme["magnitude_signal"])
+        self.assertIn("hyperscaler", theme["categories"])
+
+        print(f"\n  ✓ POWL anonymous-customer: score={theme['score']}/10, "
+              f"theme='{theme['primary_theme']}'")
+
+    def test_peng_also_has_theme(self):
+        """PENG fixture should ALSO get theme score (AI infra mention)."""
+        body = _load_fixture("peng_sgh_sk_telecom_8k.txt")
+        theme = compute_theme_score(body)
+        # PENG mentions "AI infrastructure" + "AI data center"
+        self.assertGreaterEqual(theme["score"], 2)
+
+    def test_noise_has_low_theme(self):
+        """Officer-change noise has zero theme score."""
+        body = _load_fixture("noise_5_02_officer_change.txt")
+        theme = compute_theme_score(body)
+        self.assertLess(theme["score"], 4)
+
+    def test_empty_text(self):
+        result = compute_theme_score("")
+        self.assertEqual(result["score"], 0)
+        self.assertEqual(result["categories"], {})
 
 
 # ─── integration smoke test ─────────────────────────────────────────────
