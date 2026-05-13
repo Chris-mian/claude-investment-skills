@@ -83,6 +83,13 @@ from parsers import (  # noqa: E402
 from filters import apply_all_filters, MIN_MARKET_CAP_USD, MIN_DEAL_AMOUNT_USD_M  # noqa: E402
 from analysis import compute_partner_score  # noqa: E402
 
+# v2.3: composite-signal cross-firehose detection
+# v2.3: 跨 firehose 复合信号检测
+from composite import (  # noqa: E402
+    log_alert, check_composite, is_composite_already_sent,
+    mark_composite_sent, format_composite_alert,
+)
+
 # ─── Cross-skill enrichment (optional, non-fatal) ───────────────────────
 # 跨 skill enrichment (可选, 非致命)
 _ENRICH_AVAILABLE = False
@@ -504,6 +511,51 @@ def main() -> int:
                     f"{signal.investors[0][1]:25s}  {signal.form_type}",
                     file=sys.stderr,
                 )
+
+                # ─── v2.3: Composite signal logic ───────────────────────
+                # Log this alert + check if insider firehose recently fired
+                # on same ticker. If so, send MEGA SIGNAL.
+                # 记录这次 alert + 看 insider firehose 最近是否也对该 ticker
+                # 触发过. 若是, 发 MEGA SIGNAL.
+                try:
+                    top_tier, top_canonical = signal.investors[0]
+                    log_alert(
+                        firehose_type="partner",
+                        ticker=signal.ticker,
+                        amount_usd=signal.amount_usd_m * 1e6,
+                        extra={
+                            "investor": top_canonical,
+                            "tier": top_tier,
+                            "deal_type": signal.deal_type,
+                        },
+                    )
+
+                    if not is_composite_already_sent(signal.ticker):
+                        composite = check_composite(signal.ticker, own_type="partner")
+                        if composite:
+                            own_summary = (
+                                f"{top_canonical.replace('_', ' ')} "
+                                f"${signal.amount_usd_m:,.0f}M "
+                                f"({signal.deal_type})"
+                            )
+                            mega_msg = format_composite_alert(
+                                ticker=signal.ticker,
+                                company_name=(enriched.get("company") or {}).get("name", ""),
+                                composite_info=composite,
+                                own_alert_summary=own_summary,
+                            )
+                            if send_telegram(mega_msg):
+                                mark_composite_sent(signal.ticker)
+                                print(
+                                    f"[MEGA] {signal.ticker:6s}  "
+                                    f"composite cross-fire ({composite['lag_days']}d lag)",
+                                    file=sys.stderr,
+                                )
+                except Exception as ce:
+                    # Composite is non-fatal. Never let it kill the main alert.
+                    # 复合检测非致命, 任何错误都不影响主 alert.
+                    print(f"[COMPOSITE-WARN] {signal.ticker}: {ce}",
+                          file=sys.stderr)
 
     # Persist state
     state["seen_accessions"] = list(seen)

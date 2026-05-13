@@ -65,6 +65,28 @@ except Exception as _imp_err:
     _ENRICH_AVAILABLE = False
     print(f"[INFO] enrichment package not available: {_imp_err}", file=sys.stderr)
 
+# v2.3: composite-signal cross-firehose detection (non-fatal)
+# v2.3: 跨 firehose 复合信号 (非致命)
+_COMPOSITE_AVAILABLE = False
+try:
+    # composite.py lives in strategic-partner-firehose; add its scripts to path
+    _strategic_scripts = (
+        Path(__file__).resolve().parent.parent.parent /
+        "strategic-partner-firehose" / "scripts"
+    )
+    if _strategic_scripts.exists():
+        sys.path.insert(0, str(_strategic_scripts))
+        from composite import (  # type: ignore
+            log_alert as _comp_log_alert,
+            check_composite as _comp_check,
+            is_composite_already_sent as _comp_sent,
+            mark_composite_sent as _comp_mark,
+            format_composite_alert as _comp_format,
+        )
+        _COMPOSITE_AVAILABLE = True
+except Exception as _ce:
+    print(f"[INFO] composite-signal unavailable: {_ce}", file=sys.stderr)
+
 # ─── Constants ────────────────────────────────────────────────────────────
 EDGAR_RSS_URL = (
     "https://www.sec.gov/cgi-bin/browse-edgar"
@@ -402,6 +424,46 @@ def main() -> int:
                     alerts_sent += 1
                     print(f"[ALERT-BUY] {filing['ticker']:6s}  ${total:>12,.0f}  "
                           f"{filing['owner']} ({filing['role']})", file=sys.stderr)
+
+                    # v2.3: composite signal check (non-fatal)
+                    # 复合信号检测 (非致命)
+                    if _COMPOSITE_AVAILABLE:
+                        try:
+                            _comp_log_alert(
+                                firehose_type="insider",
+                                ticker=filing["ticker"],
+                                amount_usd=total,
+                                extra={
+                                    "role": filing.get("role", ""),
+                                    "owner": filing.get("owner", ""),
+                                    "title": filing.get("title", ""),
+                                },
+                            )
+                            if not _comp_sent(filing["ticker"]):
+                                composite = _comp_check(
+                                    filing["ticker"], own_type="insider"
+                                )
+                                if composite:
+                                    own_sum = (
+                                        f"{filing.get('owner', 'Insider')} "
+                                        f"(${total:,.0f}, {filing.get('role', '')})"
+                                    )
+                                    mega = _comp_format(
+                                        ticker=filing["ticker"],
+                                        company_name=filing.get("company", ""),
+                                        composite_info=composite,
+                                        own_alert_summary=own_sum,
+                                    )
+                                    if send_telegram(mega):
+                                        _comp_mark(filing["ticker"])
+                                        print(
+                                            f"[MEGA] {filing['ticker']:6s}  "
+                                            f"insider+partner cross-fire",
+                                            file=sys.stderr,
+                                        )
+                        except Exception as ce:
+                            print(f"[COMPOSITE-WARN] {filing['ticker']}: {ce}",
+                                  file=sys.stderr)
 
         # Optionally process SELLS (off by default)
         if INCLUDE_SELLS:

@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Investment analysis skills + price-alert pipeline + real-time SEC Form 4 insider-firehose with auto-enrichment for Claude Code. Top-down macro-aware framework, bilingual EN/CN, real data via yfinance + openinsider + FRED + SEC EDGAR. v2.1: insider alerts auto-include P/E, market cap, 52W context, and a 0-10 Smart Money Score; toggle via /enrich Telegram command. For personal-finance buy-side use (swing / position / LEAPS) — not HFT.",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "pluginRoot": "."
   },
   "plugins": [
@@ -14,7 +14,7 @@
       "name": "claude-investment-skills",
       "source": ".",
       "description": "15 investment skills with pre-flight methodology (macro → insider → 3-tier → sizing → tax). Telegram alert pipeline (price-alert + Form 4 insider firehose) + optional Cloudflare Worker webhook for 1-3 sec NL chat. v2.1: Form 4 insider alerts now auto-include P/E + market cap + 52W context + 0-10 Smart Money Score; toggle via Telegram /enrich on|off.",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "author": {
         "name": "ssurmic",
         "url": "https://github.com/ssurmic"
