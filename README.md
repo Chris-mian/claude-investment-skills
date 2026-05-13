@@ -186,6 +186,56 @@ This trips people up because the SAME data is computed in TWO different places d
 
 ---
 
+## 🔥 Three discovery firehoses (cron-driven, ticker-agnostic)
+
+A second class of automation: **discovery firehoses**. Unlike `price-alert` (which monitors tickers you already know), the firehoses **discover** new tickers by scanning SEC EDGAR continuously and pushing the alpha-rich ones to Telegram.
+
+You don't tell them what to watch. They tell you what to watch.
+
+![Firehose architecture](diagrams/firehoses-en.svg)
+
+| Firehose | What it watches | What it discovers | Trigger threshold |
+|---|---|---|---|
+| **`insider-firehose`** | SEC Form 4 atom feed | Officer / director open-market buys ≥ $200k | Code "P" only (real buys, not RSU vests) |
+| **`strategic-partner-firehose`** | SEC 8-K + SC 13D atom feeds | (A) Named investments from Tier-1 strategic partners (NVIDIA/MSFT/SK Telecom/Samsung/MGX/PIF/…) **OR** (B) Theme-rich anonymous-customer 8-Ks (POWL/BE/GEV style "$400M order from a major U.S. technology company") | Either path triggers; both = bonus theme tag |
+| **`composite.py`** (shared) | The above two firehoses' alert logs | Same ticker firing both within 30 days | < 1% of alerts qualify; **🚨🚨🚨 MEGA SIGNAL** |
+
+**How you interact with them**:
+1. **One-time setup**: enable the GitHub Actions workflow (one click per fork)
+2. **Then nothing**: they run automatically every 30 min weekdays 9 AM - 7:30 PM ET
+3. **You receive**: enriched Telegram alerts whenever signal fires
+4. **Optional NL**: when an alert arrives for a ticker you don't recognize, you can talk to Claude: *"analyze TICKR"*, *"option walls TICKR"*, *"is TICKR overvalued"*, *"set alert TICKR below $X"*
+
+The firehoses themselves do not require natural-language commands — they are pure cron-driven discovery. NL is only how you **interpret and act on** what they discover.
+
+### Concrete backtest validation
+
+| Filing date | Ticker | Filing | Discovery path | Then-price | Later price |
+|---|---|---|---|---|---|
+| 2024-07-15 | SGH (→ PENG) | 8-K Item 3.02 SK Telecom $200M PIPE | A: Registry | $20 | $44 (+120% / 22 mo) |
+| 2025-03-31 | CRWV | 8-K Item 1.01 + 3.02 OpenAI $350M strategic equity | A: Registry | $40 | $187 (+367% / 3 mo) |
+| 2026-05-06 | POWL | 8-K Item 1.01 $400M "major U.S. technology company" | **B: Theme classifier** (registry would miss) | $186 | $322 (+73% / 7 days) |
+
+Path B (theme classifier) is what differentiates v2.4 from naive registry scanners. The POWL alpha — $400M behind-the-meter data center order from an unnamed hyperscaler — wouldn't be caught by any "scan for NVIDIA in filings" tool. We catch it via theme density: keywords like "behind-the-meter" + "multi-gigawatt" + "data center" + "largest order in company history" score 10/10.
+
+### Related natural-language triggers (for after a firehose alert fires)
+
+After an alert arrives, you can talk to Claude in natural language to investigate:
+
+```
+"analyze TICKR"                  → invokes analyze-stock
+"is TICKR a buy at $20"          → invokes analyze-stock + macro-warning gate
+"option walls for TICKR"         → invokes option-wall-analysis
+"find next PENG"                 → invokes find-untapped-thesis or find-alpha
+"今天有什么 insider 大单"          → invokes insider-firehose for the day's log
+"今天 strategic partner 推送"     → invokes strategic-partner-firehose status
+"set price alert TICKR below $X" → invokes price-alert
+```
+
+All NL triggers are listed in each skill's `SKILL.md` frontmatter `description:` field.
+
+---
+
 ## 🔍 State sources — where everything lives + how to inspect it
 
 Every piece of state has **one authoritative source**. Knowing where to look turns "the bot isn't working" mysteries into 30-second diagnostics. Nothing is hidden — every state location is reachable with a single `cat` / `curl` / `gh` / `wrangler` command.

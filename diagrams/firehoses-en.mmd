@@ -1,0 +1,50 @@
+%% Firehose architecture (v2.4)
+%% Three independent discovery firehoses cross-pollinate via composite signals.
+%% Source of truth: regenerate SVG/PNG via `bash scripts/render-diagrams.sh`.
+flowchart TB
+    classDef sec fill:#1f6feb,color:#fff,stroke:#0d419d,stroke-width:2px
+    classDef fire fill:#fff,color:#000,stroke:#1f6feb,stroke-width:2px
+    classDef path fill:#fffbe6,color:#000,stroke:#d4a017,stroke-width:1px
+    classDef tg fill:#2da6df,color:#fff,stroke:#1a73a8,stroke-width:2px
+    classDef mega fill:#e63946,color:#fff,stroke:#9d1f2b,stroke-width:3px
+
+    SEC[("SEC EDGAR<br/>(public, free, real-time)")]:::sec
+
+    subgraph FH1["insider-firehose (every 30 min)"]
+        F1["Form 4 atom feed<br/>officer / director trades"]:::fire
+        F1A["Filter: code = P (open-market buy)<br/>amount ≥ $200k<br/>role ≠ pure 10% holder"]:::path
+    end
+
+    subgraph FH2["strategic-partner-firehose (every 30 min)"]
+        F2["8-K + SC 13D atom feeds"]:::fire
+        F2A["Path A: Registry-based<br/>NVIDIA / SK Telecom / MGX /<br/>Microsoft / Samsung / TSMC / ..."]:::path
+        F2B["Path B: Theme classifier (v2.4)<br/>AI / DataCenter / Hyperscaler<br/>proxy keywords (catches POWL)"]:::path
+    end
+
+    subgraph EN["enrichment/ (shared module)"]
+        E1["valuation.py<br/>P/E · mcap · net cash"]
+        E2["price_action.py<br/>50DMA · 200DMA · 52W"]
+        E3["score.py<br/>0-10 Smart Money Score"]
+    end
+
+    COMP{{"composite.py<br/>same ticker fires<br/>BOTH firehoses<br/>within 30 days?"}}
+
+    TG["Telegram bot<br/>$TELEGRAM_BOT_TOKEN"]:::tg
+    MEGA["🚨🚨🚨 MEGA SIGNAL<br/>insider + partner aligned"]:::mega
+
+    SEC --> F1
+    SEC --> F2
+    F1 --> F1A --> EN
+    F2 --> F2A --> EN
+    F2 --> F2B --> EN
+
+    F1A -.log.-> COMP
+    F2A -.log.-> COMP
+    F2B -.log.-> COMP
+
+    EN --> TG
+    COMP --> MEGA
+    MEGA --> TG
+
+    classDef sub fill:#f7f9fc,color:#000,stroke:#cdd5e0,stroke-width:1px
+    class FH1,FH2,EN sub

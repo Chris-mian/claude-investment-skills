@@ -22,6 +22,29 @@ If you read the 8-K the day it filed, you bought at ~$20. The Twitter pump fired
 
 This skill watches the same SEC firehose **so you don't need to follow Twitter to find these stories**.
 
+## How you interact with this skill — important
+
+**This skill is cron-driven, not natural-language-driven.**
+
+```
+You don't ask it anything.    ←  unlike analyze-stock or earnings-prep
+You enable it once.           ←  one click in GitHub Actions
+Then it runs forever.         ←  every 30 min weekdays
+You receive Telegram alerts.  ←  whenever the SEC has news
+```
+
+The NL triggers in this skill's frontmatter (`"find next PENG"`, `"8-K partnership"`, etc.) are for **conversational lookup** — they let you ask Claude things like:
+
+| You ask Claude (NL) | Skill does |
+|---|---|
+| "show me last 7 days of strategic-partner alerts" | reads `scripts/recent_alerts.json` |
+| "find next PENG" | summarizes recent high-score alerts |
+| "what is 8-K Item 3.02" | reads `README.md` to explain |
+| "is filing X a partnership signal" | runs `classifier.compute_theme_score` on the text |
+| "explain Partner Score 7/10 for TICKR" | runs `analysis.compute_partner_score` |
+
+**The real-time monitoring** is the GitHub Actions cron (`.github/workflows/strategic-partner-firehose.yml`), not Claude Code on your laptop.
+
 ## Architecture
 
 ```
