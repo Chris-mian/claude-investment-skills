@@ -208,9 +208,11 @@ bash ~/.claude/skills/setup.sh
 
 ![Firehose 架构](diagrams/firehoses-zh.svg)
 
-### 三个真实案例 —— 看清 alpha 是怎么"漏"出去的
+### 四个真实案例 —— 看清 alpha 是怎么"漏"出去的
 
 这不是假设。这是真实的 filing + 真实的价格。
+
+**三条 alpha 渠道**：SEC EDGAR (8-K / Form 4) · 13F 对冲基金 · 政治官员交易 (OGE 278-T + STOCK Act)
 
 #### 案例 1: CoreWeave (CRWV) —— $40 到 $187 / 3 个月
 
@@ -254,6 +256,46 @@ AI 时代最戏剧性的 IPO 故事。8-K 披露 OpenAI 为战略股东这件事
 | Q2 战略转向 inference AI | 2026-04-01 | $18-30 | +20 个月 |
 | 第一篇 Substack | 2026-05-08 | $44 | +21.5 个月 |
 | Kaduna 推文 | 2026-05-12 | **$50** | +22 个月, **+150%** |
+
+#### 案例 4: 政治官员交易监控 —— 白宫 + 国会, 强制披露窗口
+
+法律要求所有联邦官员在交易后 **30-45 天内强制披露**。这个窗口里的信息在 Twitter/CNBC 发现前**几天到几周**就已经在 OGE/STOCK Act 系统里了。
+
+> **Trump Q1 2026**: 一季度内 3,642 笔交易（MSFT $5M-25M 买入 · VANGUARD $5M-25M 卖出 · NVDA/ORCL/META 买入）。278-T 于 **5/8/2026 提交 OGE**，我们的 script **当天早上**抓到并推送 Telegram。CNBC 分析文章 **2 天后**才出。
+
+> **John McGuire (众议员, R-VA)**: 5/13/2026 买入 AAPL + MSFT + NVDA，House PTR 同日提交，**当天早 9 点**推送 Telegram。
+
+![政治官员交易监控](diagrams/timeline-political-zh.svg)
+
+| 来源 | 日期 | 交易 | 距披露滞后 |
+|---|---|---|---|
+| **OGE 278-T 提交 (Trump Q1 2026)** | 2026-05-08 | MSFT $5M-25M 买, VANGUARD $5M-25M 卖, NVDA $1M-5M 买 | **0 天** (script 当天抓到) |
+| **House PTR 提交 (McGuire)** | 2026-05-13 | AAPL + MSFT + NVDA 买入 | **0 天** (早 9 点推送) |
+| 媒体开始报道 278-T | 2026-05-10 | — | +2 天 |
+| Twitter 热议"白宫加仓 MSFT" | 2026-05-14 | — | +6 天 |
+
+**alpha 来自哪里 / Alpha 漏出路径**：
+
+```
+联邦法律强制披露 (STOCK Act + OGE 监管条例)
+         │
+         ├── 国会 535 人 ── STOCK Act PTR ── 45 天窗口
+         │       │            (House XML + Senate eFD)
+         │       └── 我们的 script → Telegram (当天)
+         │
+         └── 白宫 / 内阁 ── OGE Form 278-T ── 30-45 天窗口
+                 │            (OGE PDF portal, pdfplumber 解析)
+                 └── 我们的 script → Telegram (当天)
+                              │
+                              ▼
+                    散户 / CNBC / Twitter
+                    (2-14 天之后才发现)
+```
+
+**跟踪名单 (12 人)**：
+- 🏛️ 行政: Trump (P1) · Bessent 财长 (P1) · Lutnick 商务部长 (P1)
+- 🏛️ 参议院: Tuberville (P1) · Kelly · Sullivan · Whitehouse
+- 🏛️ 众议院: Pelosi (P1) · Austin Scott (P1) · Crenshaw (P1) · McCaul · Gottheimer · MTG
 
 ---
 
