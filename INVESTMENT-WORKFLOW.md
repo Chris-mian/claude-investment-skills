@@ -75,6 +75,59 @@ User question → Which skill?
 | `schedule` | Recurring agents | When + what |
 | `loop` | Iterative tasks | Prompt |
 
+### Tier 5 — Alpha Firehose System (GitHub Actions, 常驻后台)
+
+Three mandatory disclosure channels that create **structural alpha leakage** — the law forces insiders to disclose, creating a window before Twitter/retail discovers it.
+
+三条法定披露渠道，形成**结构性 alpha 漏出**——法律强制内部人披露，在 Twitter/散户发现之前形成时间窗口。
+
+| Firehose | Alpha Source | Disclosure Window | Form | Who |
+|---|---|---|---|---|
+| **13F Firehose** | Hedge fund Q1 holdings, unreported catalysts (PIPE, stakes) | 45 days after quarter-end | 13F-HR | Funds >$100M AUM |
+| **EDGAR / SEC Firehose** | 8-K PIPE deals, Form 4 open-market buys, 13D/G stake disclosures | 4 days (8-K) / 2 days (Form 4) | 8-K, Form 4, 13D | Corporates, insiders |
+| **Political Firehose** | Congress + White House officials' stock trades | 45 days (Congress) / 30-45 days (White House) | STOCK Act PTR, OGE 278-T | 535 legislators + Cabinet |
+
+**How alpha leaks / alpha 如何漏出**:
+
+```
+Government officials must disclose trades by law
+政府官员必须依法披露交易
+
+      Congress (535人)              White House (总统/内阁)
+      STOCK Act PTR                 OGE Form 278-T
+      45-day window                 30-45 day window
+      House XML + Senate eFD        PDF via OGE portal
+             │                              │
+             └──────────┬───────────────────┘
+                        ▼
+             Firehose script detects NEW filing
+             （3x/day via GitHub Actions）
+                        ▼
+             Parse PDF / XML → Extract trades
+                        ▼
+             Match against tracked officials
+             （Pelosi / Tuberville / Trump / Bessent / Lutnick）
+                        ▼
+             Telegram alert within hours of disclosure
+             （vs. days/weeks for Twitter discovery）
+```
+
+**Case study / 案例**:
+- PENG (formerly SGH): SEC 8-K Item 3.02 revealed SK Telecom $200M PIPE → $20 → $50 (+150%) over 22 months while Twitter was asleep
+- Pelosi NVDA calls: disclosed ~30 days after trade, months before NVDA exploded
+- Trump Q1 2026: 3,642 trades, OGE 278-T filed 5/8/2026 — script caught it same day
+
+**运行架构 / Architecture**:
+- Code lives in `github.com/ssurmic/claude-investment-skills/political-firehose/`
+- Runs on **GitHub Actions** (NOT local machine) — 3x daily 09:00/13:00/17:00 ET
+- State checkpointed to `state.json` after each run (git commit)
+- Telegram bot sends alerts to private channel
+
+**Tracked politicians (12)**:
+- Executive: Trump (P1), Bessent/Treasury (P1), Lutnick/Commerce (P1)
+- Senate: Tuberville (P1), Kelly, Sullivan, Whitehouse
+- House: Pelosi (P1), Austin Scott (P1), Crenshaw (P1), McCaul, Gottheimer, MTG
+
 ## 🔥 The Master Workflow (Standard Stock Analysis)
 
 When user gives you a ticker and asks "what about X":
