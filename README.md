@@ -1,45 +1,96 @@
 # Claude Investment Skills
 
-> A streamlined investment analysis system for [Claude Code](https://docs.claude.com/claude-code).
-> Top-down framework: Macro → Year theme → Sector → Stock → Entry → Sizing.
-> Disciplined, valuation-aware, options-friendly. Triggers via natural language in English or Chinese.
+**13 investment analysis skills + 5 real-time firehoses for [Claude Code](https://docs.claude.com/claude-code).** Ask in plain English or Chinese. Get structured stock analysis, macro regime reads, options setups, and earnings prep — or let the free firehoses monitor SEC filings 24/7 and push Telegram alerts before Twitter picks them up.
 
-[中文版本 / Chinese Version](./README-zh.md) · [5-min Introduction](./INTRODUCTION.md) · [中文介绍](./INTRODUCTION-zh.md)
+[中文版本](./README-zh.md) · [5-min Introduction](./INTRODUCTION.md) · [中文介绍](./INTRODUCTION-zh.md)
 
-## 🎯 Who this is for (and who it's NOT for)
+---
 
-This is a **research-grade investment thinking partner**, not a trading bot.
+## What's included
 
-### Designed for
+### Analysis skills — powered by Claude
 
-- 🏦 **Individual / personal-finance investors** (taxable account, IRA / 401k, family money)
-- 📚 **Buy-side discretionary traders** — not market-makers, not algo / HFT firms
-- 📉 **Left-side accumulation** style: buying weakness with tier-laddered entries, valuation-aware
-- 📈 **Right-side reversal** style: capitulation-then-confirmation entries (the ORCL pattern)
-- 🕒 **Swing (1-3 weeks) / Position (1-3 months) / LEAPS (6-24 months)** horizons
-- 🌐 **US-listed equities + ETFs + options** (FX / crypto / international on roadmap — see [NEXT-STEPS.md](./NEXT-STEPS.md))
+These run locally in Claude Code and require an **Anthropic API key** (which Claude Code already uses — no extra setup).
 
-### NOT for
+| Skill | What it does |
+|---|---|
+| `analyze-stock` | Deep-dive: valuation, technicals, insider activity, full investment thesis |
+| `macro-risk-check` | Macro regime read — run this before opening any new position |
+| `earnings-prep` | Pre-earnings setup: consensus expectations, risk/reward, sizing guidance |
+| `leaps-screen` | Screen for asymmetric long-dated options opportunities |
+| `option-wall-analysis` | Gamma walls, max pain, dealer positioning |
+| `portfolio-audit` | Full portfolio health check with trim recommendations and dry-powder math |
+| `find-untapped-thesis` | Surface under-the-radar angles the market hasn't priced yet |
+| `find-alpha` | Cross-asset alpha screen across sectors and themes |
+| `macro-warning` | Daily pre-market regime scan — catches regime shifts early |
+| `narrative-reversal-screen` | Find tickers where the market narrative is quietly flipping |
+| `sector-rotation-analysis` | Which sectors are flowing in and out of favor |
+| `review-investment-screenshot` | Drop in a portfolio screenshot for honest P&L review |
+| `tax-optimize` | Loss harvesting and lot selection for taxable accounts |
 
-- ⚡ **High-frequency trading** — defined here as **>5 trades/day in any single asset type**. The 2-min cron + 1-3 sec webhook latencies are too coarse.
-- 🤖 **Algorithmic / market-making** strategies that need millisecond execution
-- 💱 FX / crypto / non-US listings (currently — yfinance coverage too inconsistent; on roadmap)
-- 📊 **Pure quantitative backtesting** — the framework is live-data + discretionary, not signal-backtested
-- 🎯 **Day-trading** — 2-min granularity is too coarse for scalping; use a real broker alert
-- 🏢 **B2B / managed SaaS** — there is no hosted tier. Everyone self-hosts on their own fork.
+Trigger any skill in plain language — no slash commands required:
+```
+analyze NVDA
+macro risk check
+what's the gamma wall on NOK this week?
+find me an AI power play no one's talking about
+```
 
-### Latency expectations (be honest about what this can and can't do)
+### Discovery firehoses — free, no API key needed
 
-| Layer | Latency | Suitable for |
+These run as GitHub Actions cron jobs and push Telegram alerts. **The only cost is your time to set them up.**
+
+| Firehose | What it monitors |
+|---|---|
+| **Insider** | Form 4 filings: executive open-market buys ≥ $200k |
+| **13F** | Famous funds: Berkshire, Druckenmiller, Ackman, Leopold, Dalio, and more |
+| **Political** | Congress + White House mandatory trade disclosures (STOCK Act / OGE 278-T) |
+| **Strategic partner** | 8-K filings: Tier-1 investor stakes, major contracts, PIPE rounds |
+| **Price alerts** | Custom price triggers on any ticker → instant Telegram push |
+
+> **Optional:** Add a Cloudflare Worker (~15 min setup) to get 1–3 second Telegram bot responses instead of 2–15 minutes. See [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+---
+
+## What you need
+
+| Requirement | Purpose | Required for |
 |---|---|---|
-| Price scanner (alerts fire) | 2-min cron | Research triggers ("alert when GLW comes back to tier-1") |
-| Chat path A (GH Actions polling) | 2-15 min response | Casual NL chat with bot |
-| Chat path B (Cloudflare webhook) | 1-3 sec response | Active conversation with bot |
-| End-to-end `macro-warning` full scan | 30-60 sec | Daily pre-market regime read |
+| [Claude Code](https://docs.claude.com/claude-code/install) | Runs all analysis skills locally | Analysis skills |
+| Anthropic API key | Powers natural-language analysis (Claude Code handles this) | Analysis skills |
+| GitHub account + Personal Access Token | Hosts firehose cron jobs, stores alert state | Firehoses & alerts |
+| Telegram bot token + chat ID | Receives push notifications | Alerts |
+| Python 3.9+, macOS or Linux | Runs local scripts | Both |
+| Cloudflare account | Fast bot replies (1–3 sec vs 2–15 min) | Optional |
 
-**None of these are low-latency by HFT standards.** If you need sub-100ms, this is the wrong tool. If you trade < 5x/day per ticker and care about getting your fundamental thesis right, you're in the right place.
+---
 
-For planned features (EMA, RSI, volume alerts, additional notification channels, FX/crypto, real-time WebSocket option), see [`NEXT-STEPS.md`](./NEXT-STEPS.md).
+## Install
+
+**Option 1 — Git clone** (3 min, recommended — gives you a fork to customize):
+
+```bash
+git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
+bash ~/.claude/skills/setup.sh
+```
+
+**Option 2 — Plugin marketplace** (30 sec, easiest way to get started):
+
+```bash
+/plugin install claude-investment-skills@claude-investment-skills-marketplace
+bash ~/.claude/plugins/claude-investment-skills/setup.sh
+```
+
+Both methods install the same 13 skills, same Python scripts, and the same alert pipeline. You can switch between them at any time — your `alerts.json` lives in your GitHub fork either way.
+
+After setup, open Claude Code and start talking:
+
+```
+analyze NVDA
+macro risk check
+```
+
+Slash commands also work if you prefer: `/analyze-stock NVDA`, `/macro-risk-check`.
 
 ---
 

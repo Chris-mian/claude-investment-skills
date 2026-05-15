@@ -1,45 +1,96 @@
 # Claude 投资分析 Skills 系统
 
-> 给 [Claude Code](https://docs.claude.com/claude-code) 用的投资分析自动化系统。
-> Top-Down 框架：宏观 → 年度主题 → 板块 → 个股 → 入场点位 → 仓位。
-> 价值 + 期权 + 宏观感知三合一，支持中英文自然语言触发。
+**13 个投资分析技能 + 5 条实时数据流，专为 [Claude Code](https://docs.claude.com/claude-code) 设计。** 用中文或英文直接聊，就能得到个股深度分析、宏观 regime 判断、期权布局和财报准备。免费的 Firehose 模块 24/7 监控 SEC 文件，在 Twitter 发现之前把信号推送到你的 Telegram。
 
 [English Version](./README.md) · [5 分钟介绍](./INTRODUCTION-zh.md) · [English intro](./INTRODUCTION.md)
 
-## 🎯 适用人群（以及不适用的）
+---
 
-这是一个**研究级别的投资思考伙伴**，不是交易 bot。
+## 里面有什么
 
-### 设计给
+### 分析技能 — 由 Claude 驱动
 
-- 🏦 **个人 / 个人理财投资者**（taxable 账户、IRA / 401k、家庭账户）
-- 📚 **Buy-side 主观交易** —— 不是 market maker、不是算法 / HFT 公司
-- 📉 **左侧布局**风格：弱势分批建仓、看估值
-- 📈 **右侧反转**风格：恐慌后确认入场（ORCL 模式）
-- 🕒 **Swing（1-3 周）/ Position（1-3 月）/ LEAPS（6-24 月）** 时间框架
-- 🌐 **美股 + ETF + 期权**（FX / 加密货币 / 国际市场在路线图上 —— 见 [NEXT-STEPS-zh.md](./NEXT-STEPS-zh.md)）
+在 Claude Code 本地运行，需要 **Anthropic API key**（Claude Code 本身已经在用，不需要额外设置）。
 
-### 不适合
+| 技能 | 做什么 |
+|---|---|
+| `analyze-stock` | 个股深度分析：估值、技术面、内部人活动、完整投资论点 |
+| `macro-risk-check` | 宏观 regime 判断 —— 开新仓前必跑 |
+| `earnings-prep` | 财报前决策：市场预期、风险收益比、仓位建议 |
+| `leaps-screen` | 筛选非对称的长期期权机会 |
+| `option-wall-analysis` | Gamma wall、max pain、做市商持仓分析 |
+| `portfolio-audit` | 全组合体检：持仓质量、trim 建议、现金储备规划 |
+| `find-untapped-thesis` | 挖市场还没有定价的低调逻辑 |
+| `find-alpha` | 跨资产、跨板块的 alpha 筛选 |
+| `macro-warning` | 每日盘前宏观全扫描，提前捕捉 regime 切换信号 |
+| `narrative-reversal-screen` | 找市场叙事正在悄悄反转的标的 |
+| `sector-rotation-analysis` | 识别当前板块轮动方向 |
+| `review-investment-screenshot` | 上传持仓截图，得到诚实的 P&L 复盘 |
+| `tax-optimize` | 亏损收割和批次优化（taxable 账户）|
 
-- ⚡ **高频交易（HFT）** —— 本文定义：**同一资产类型每日交易 >5 次**。2 分钟 cron + 1-3 秒 webhook 的延迟对这类策略太粗
-- 🤖 **算法 / 做市**策略：需要毫秒级延迟
-- 💱 外汇 / 加密货币 / 非美股（目前 —— yfinance 覆盖不稳定；在路线图）
-- 📊 **纯量化回测** —— 本框架是 live data + 主观决策；不做信号回测
-- 🎯 **日内交易** —— 2 分钟粒度对 scalping 太粗；用真正的 broker alert
-- 🏢 **B2B / 托管 SaaS** —— 没有 hosted tier。每个用户都在自己的 fork 上自托管。
+不需要记命令，直接用大白话说：
+```
+分析一下 NVDA
+宏观风险检查
+NOK 这周的 gamma wall 在哪里？
+找一个还没人发现的 AI 电力方向标的
+```
 
-### 延迟预期（实话实说，能做到啥不能做到啥）
+### Discovery Firehose — 完全免费，不需要 API key
 
-| 层 | 延迟 | 适合 |
+这些功能跑在 GitHub Actions 上，触发时推送 Telegram。**唯一的成本是你配置它们花的时间。**
+
+| Firehose | 监控什么 |
+|---|---|
+| **内部交易** | Form 4：高管开放市场买入 ≥ $200k |
+| **13F 名人基金** | 巴菲特、Druckenmiller、Ackman、Leopold、Dalio 等的持仓变化 |
+| **政治官员交易** | 国会议员 + 白宫强制披露（STOCK Act / OGE 278-T）|
+| **战略伙伴** | 8-K 大额合同、Tier-1 投资人入股、PIPE 融资 |
+| **价格 Alert** | 任意标的的自定义价格触发 → 实时 Telegram 推送 |
+
+> **可选：** 配置 Cloudflare Worker（约 15 分钟），把 Telegram bot 的响应速度从 2–15 分钟压到 1–3 秒。详见 [ARCHITECTURE-zh.md](./ARCHITECTURE-zh.md)。
+
+---
+
+## 需要准备什么
+
+| 需要什么 | 用途 | 哪些功能要用 |
 |---|---|---|
-| 价格扫描（alert 触发）| 2 分钟 cron | 研究级触发（"GLW 回到 tier-1 时提醒"）|
-| Chat 路径 A（GH Actions polling）| 2-15 分钟回复 | 跟 bot 偶尔聊聊 |
-| Chat 路径 B（Cloudflare webhook）| 1-3 秒回复 | 跟 bot 主动对话 |
-| End-to-end `macro-warning` 全扫描 | 30-60 秒 | 每日盘前 regime 读 |
+| [Claude Code](https://docs.claude.com/claude-code/install) | 在本地运行分析技能 | 分析技能 |
+| Anthropic API key | 驱动自然语言分析（Claude Code 已在使用）| 分析技能 |
+| GitHub 账号 + Personal Access Token | 托管 Firehose cron、存储 alert 状态 | Firehose 和 alert |
+| Telegram bot token + chat ID | 接收推送通知 | Alert |
+| Python 3.9+，macOS 或 Linux | 运行本地脚本 | 两者都需要 |
+| Cloudflare 账号 | Bot 快速回复（1–3 秒）| 可选 |
 
-**这些延迟对 HFT 来说都属于慢**。如果你要 sub-100ms 响应，这不是合适的工具。如果你每只票每日交易 < 5 次、关心基本面 thesis 是否对，就是合适的。
+---
 
-未来功能（EMA、RSI、成交量 alert、更多通知 channel、FX/加密货币、实时 WebSocket 选项）见 [`NEXT-STEPS-zh.md`](./NEXT-STEPS-zh.md)。
+## 安装
+
+**方式一 — Git clone**（3 分钟，推荐，可以 fork 自定义）：
+
+```bash
+git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
+bash ~/.claude/skills/setup.sh
+```
+
+**方式二 — Plugin marketplace**（30 秒，最快上手）：
+
+```bash
+/plugin install claude-investment-skills@claude-investment-skills-marketplace
+bash ~/.claude/plugins/claude-investment-skills/setup.sh
+```
+
+两种方式装出来完全一样：同一套 13 个技能、同一批 Python 脚本、同一套 alert pipeline。可以随时切换，`alerts.json` 始终存在你的 GitHub fork 里。
+
+装完之后，打开 Claude Code 直接说：
+
+```
+分析一下 NVDA
+宏观风险检查
+```
+
+也支持 slash 命令：`/analyze-stock NVDA`、`/macro-risk-check`。
 
 ---
 
