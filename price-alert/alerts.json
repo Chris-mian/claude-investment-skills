@@ -320,6 +320,19 @@
       "created_price": 14.710000038146973,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "nok-call-entry-5f2a91",
+      "ticker": "NOK",
+      "condition": {
+        "op": "below",
+        "threshold": 13.5
+      },
+      "note": "\ud83d\udcde NOK CALL \u4e70\u5165\u4fe1\u53f7\n\n\u73b0\u4ef7\u8dcc\u5230 $13.50 \u4ee5\u4e0b = \u671f\u6743\u4e70\u5165\u7a97\u53e3\u5f00\u542f\u3002\n\n\u63a8\u8350\u64cd\u4f5c\uff1a\n  \u2022 5/29 $14 call\uff08\u7a33\u5065\uff0c7% \u76ee\u6807\uff0cgamma\u7a97\u53e3\u591f\uff09\n  \u2022 5/29 $15 call\uff08\u6fc0\u8fdb\uff0c15/22 \u768428K OI\u5899\u8981\u7a81\u7834\uff09\n  \u2022 6/5 $14 call\uff08\u5982\u679c\u60f3\u7559\u66f4\u591a\u65f6\u95f4\uff09\n\n\u4e0d\u4e70\u7684\u7406\u7531\uff1a5/22 max pain $13 = \u5f15\u529b\u8fd8\u5728\uff0c\u7b49\u6210\u4ea4\u91cf\u91cd\u56de 130M+ \u518d\u786e\u8ba4\u3002\n\u4e70\u7684\u7406\u7531\uff1a$13.17 = gap fill + max pain \u4e09\u91cd\u5171\u632f\uff0ccall \u6700\u4fbf\u5b9c\u65f6\u4e70\u3002\n\n\u76ee\u6807\u51fa\u573a\uff1a$15 sell 1/3\uff0c$16 sell 1/3\uff0c$20 sell 1/3\u3002",
+      "created": "2026-05-15",
+      "created_price": 13.95,
+      "active": true,
+      "fired": false
     }
   ]
 }
