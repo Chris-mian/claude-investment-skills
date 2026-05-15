@@ -121,11 +121,16 @@ bash ~/.claude/skills/setup.sh
 │  │  │   ├── option_walls.py                                        │ │
 │  │  │   └── max_pain.py                                            │ │
 │  │  │                                                              │ │
-│  │  └── price-alert/                                               │ │
-│  │      ├── alerts.json              ← 配置文件。你或 bot（聊天）  │ │
-│  │      │                               都能改。                  │ │
-│  │      └── scripts/check_alerts.py  ← 这个**不在本地跑**；       │ │
-│  │                                      在 GitHub Actions 上跑。   │ │
+│  │  ├── price-alert/                                               │ │
+│  │  │   ├── alerts.json              ← 配置文件。你或 bot（聊天）  │ │
+│  │  │   │                               都能改。                  │ │
+│  │  │   └── scripts/check_alerts.py  ← **不在本地跑**；           │ │
+│  │  │                                   在 GitHub Actions 上跑。   │ │
+│  │  │                                                              │ │
+│  │  └── political-firehose/scripts/                               │ │
+│  │      ├── political_firehose.py    ← **GitHub Actions 上跑**   │ │
+│  │      ├── oge_watcher.py              OGE 278-T PDF 解析        │ │
+│  │      └── congress_watcher.py         STOCK Act PTR 解析        │ │
 │  └──────────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────┘
               │ git push（你加/取消 alert 或 commit 改动）
@@ -141,6 +146,11 @@ bash ~/.claude/skills/setup.sh
 │   │   → 读 alerts.json → 从 Yahoo 拉价格                                │
 │   │   → 命中条件 → POST 到 Telegram。就这样。                            │
 │   │   （这个 loop **没有 AI**。纯 Python `if price <= threshold`。）    │
+│   │                                                                      │
+│   ├── political-firehose.yml  3x/天（9/13/17 UTC），工作日              │
+│   │   → 扫 OGE portal（白宫）+ House XML（国会）                        │
+│   │   → 解析 PDF → 提取交易 → 推 Telegram                              │
+│   │   （纯 Python，无 AI — 遇到 Trump/Pelosi 等 12 人才推送）          │
 │   │                                                                      │
 │   └── telegram-chat.yml  每 2-5 分钟（**只有选项 A chat 才启用**）      │
 │       → poll Telegram → 调 Anthropic Claude → 改 alerts.json            │
