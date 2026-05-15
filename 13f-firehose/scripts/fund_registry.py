@@ -147,7 +147,7 @@ FUNDS: List[Fund] = [
         manager="Ray Dalio (legacy) / Karen Karniol-Tambour",
         tag="MACRO",
         blurb="Largest hedge fund globally — All Weather tilts visible",
-        priority=2,
+        priority=1,
     ),
 
     # === Macro / global ===
