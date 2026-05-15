@@ -269,10 +269,52 @@ AI 时代最戏剧性的 IPO 故事。8-K 披露 OpenAI 为战略股东这件事
 
 | 来源 | 日期 | 交易 | 距披露滞后 |
 |---|---|---|---|
-| **OGE 278-T 提交 (Trump Q1 2026)** | 2026-05-08 | MSFT $5M-25M 买, VANGUARD $5M-25M 卖, NVDA $1M-5M 买 | **0 天** (script 当天抓到) |
+| **OGE 278-T 提交 (Trump Q1 2026)** | 2026-05-08 | MSFT $5M–$25M 买, VANGUARD $5M–$25M 卖, **ORCL $1M–$5M 买** (3/17), NVDA $1M–$5M 买 | **0 天** (script 当天抓到) |
 | **House PTR 提交 (McGuire)** | 2026-05-13 | AAPL + MSFT + NVDA 买入 | **0 天** (早 9 点推送) |
 | 媒体开始报道 278-T | 2026-05-10 | — | +2 天 |
 | Twitter 热议"白宫加仓 MSFT" | 2026-05-14 | — | +6 天 |
+
+**Telegram 推送格式（OGE 278-T — Trump Q1 2026，法定披露数据，非投资建议）**
+
+```
+🏛 OGE 278-T  ⚡ NEW FILING
+
+👤 Donald J. Trump  🔴 R
+🎯 President of the United States
+🗓 Filed: 5/8/2026  |  2,707 total (2,415 buys / 292 sells)
+
+🟢 TOP BUYS (2,415 total):
+  🟢 MSFT   Microsoft Corp        $5M–$25M  3/17/2026
+  🟢 NVDA   Nvidia Corp           $1M–$5M   2/10/2026
+  🟢 ORCL   Oracle Corp           $1M–$5M   3/17/2026  ← Trump 季内最大科技买入之一
+  🟢 HOOD   Robinhood Markets     $1M–$5M   2/10/2026
+  🟢 QCOM   Qualcomm Inc          $1M–$5M   1/12/2026
+  _...+2,410 more buys_
+
+🔴 TOP SELLS (292 total):
+  🔴 VIG    Vanguard Div ETF      $5M–$25M
+  🔴 META   Meta Platforms        $5M–$25M
+  _...+290 more sells_
+
+📎 OGE 278-T PDF →  https://extapps2.oge.gov/...
+_3,642 trades Q1 2026. ORCL/NVDA/HOOD 买; VIG/META 卖_
+```
+
+**Telegram 推送格式（STOCK Act PTR — 国会众议员）**
+
+```
+🏛 STOCK Act PTR  ⚡ NEW FILING
+
+👤 Rep. John McGuire  🔴 R-VA
+🎯 U.S. House of Representatives
+🗓 Filed: 2026-05-13  |  3 笔交易
+
+  🟢 AAPL   Apple Inc            $1K–$15K  2026-05-13
+  🟢 MSFT   Microsoft Corp       $1K–$15K  2026-05-13
+  🟢 NVDA   NVIDIA Corporation   $1K–$15K  2026-05-13
+
+📎 PTR Filing →  House Disclosure Portal
+```
 
 **alpha 来自哪里 / Alpha 漏出路径**：
 
