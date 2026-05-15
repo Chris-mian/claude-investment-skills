@@ -202,6 +202,32 @@ FUNDS: List[Fund] = [
         priority=3,
     ),
 
+    # === AI-focused growth ===
+    Fund(
+        cik=1541617,
+        name="Altimeter Capital",
+        manager="Brad Gerstner",
+        tag="AI",
+        blurb="AI infrastructure concentrated bets; SNOW IPO anchor; open letter to Meta catalyzed cost discipline",
+        priority=1,
+    ),
+    Fund(
+        cik=1840735,
+        name="Greenoaks Capital Partners",
+        manager="Neil Mehta",
+        tag="AI",
+        blurb="Hyper-concentrated growth (5-10 names); AI/SaaS heavy post-2024",
+        priority=2,
+    ),
+    Fund(
+        cik=1747057,
+        name="D1 Capital Partners",
+        manager="Daniel Sundheim",
+        tag="VC",
+        blurb="Tiger Cub — public/private crossover, heavy tech/AI tilt",
+        priority=2,
+    ),
+
     # === Distressed / credit ===
     Fund(
         cik=1027796,
@@ -219,6 +245,16 @@ FUNDS: List[Fund] = [
         manager="Michael Burry",
         tag="VALUE",
         blurb="The Big Short guy — small AUM but every 13F triggers Twitter frenzy",
+        priority=1,
+    ),
+
+    # === Value / long-term compounders ===
+    Fund(
+        cik=1135778,
+        name="Miller Value Partners",
+        manager="Bill Miller",
+        tag="VALUE",
+        blurb="Beat S&P 500 15 consecutive years at Legg Mason; early Amazon & Bitcoin conviction",
         priority=1,
     ),
 ]
