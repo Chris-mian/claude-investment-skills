@@ -108,9 +108,40 @@ INCLUDE_SELLS = os.environ.get("FORM4_INCLUDE_SELLS", "") == "1"
 TEST_MODE = os.environ.get("TEST_MODE", "") == "1"
 
 STATE_FILE = Path(__file__).parent / "form4_state.json"
+VIP_FILE   = Path(__file__).parent / "vip_watchlist.json"
 
 # Polite throttle: SEC asks for ≤10 req/sec
 HTTP_DELAY = 0.15  # seconds between requests
+
+# ─── VIP watchlist ────────────────────────────────────────────────────────
+def load_vip_watchlist() -> list[dict]:
+    """Load VIP persons who bypass normal threshold + sell filter.
+
+    Format: [{"name_contains": "Andreessen", "tickers": ["META"], "include_sells": true}]
+    tickers=null means any ticker triggers an alert.
+    """
+    if not VIP_FILE.exists():
+        return []
+    try:
+        return json.loads(VIP_FILE.read_text()).get("persons", [])
+    except Exception:
+        return []
+
+
+def vip_match(filing: dict, vip_list: list[dict]) -> dict | None:
+    """Return the matching VIP entry, or None if no match."""
+    owner = (filing.get("owner") or "").lower()
+    ticker = (filing.get("ticker") or "").upper()
+    for entry in vip_list:
+        if entry.get("name_contains", "").lower() not in owner:
+            continue
+        tickers = entry.get("tickers")
+        if tickers is None or ticker in [t.upper() for t in tickers]:
+            return entry
+    return None
+
+
+_VIP_LIST = load_vip_watchlist()
 
 # ─── State helpers ────────────────────────────────────────────────────────
 def load_state() -> dict:
@@ -396,12 +427,13 @@ def main() -> int:
             continue
 
         # Process BUYS
+        vip = vip_match(filing, _VIP_LIST)
         purchases = [t for t in filing["transactions"] if t["code"] == CODE_PURCHASE]
         if purchases:
             total = sum(t["value"] for t in purchases)
-            if total < MIN_VALUE_USD:
+            if total < MIN_VALUE_USD and not vip:
                 skipped_below_threshold += 1
-            elif filing["is_10pct_only"]:
+            elif filing["is_10pct_only"] and not vip:
                 # Pure 10% holder buys (e.g. Saba Capital activist position) —
                 # different signal than officer/director conviction. Skip by
                 # default; revisit in v2.1 if user wants these too.
@@ -465,14 +497,14 @@ def main() -> int:
                             print(f"[COMPOSITE-WARN] {filing['ticker']}: {ce}",
                                   file=sys.stderr)
 
-        # Optionally process SELLS (off by default)
-        if INCLUDE_SELLS:
+        # Optionally process SELLS (off by default; VIP always included)
+        if INCLUDE_SELLS or vip:
             sells = [t for t in filing["transactions"] if t["code"] == CODE_SALE]
-            if sells and not filing["is_10pct_only"]:
+            vip_sells = vip and vip.get("include_sells", True)
+            if sells and (not filing["is_10pct_only"] or vip):
                 total = sum(t["value"] for t in sells)
-                # Higher threshold for sells (5x) since sells are noisier
                 sell_threshold = MIN_VALUE_USD * 5
-                if total >= sell_threshold:
+                if total >= sell_threshold or vip_sells:
                     msg = format_alert(filing, side="SELL")
                     if msg and _ENRICH_AVAILABLE and enrichment_enabled():
                         try:

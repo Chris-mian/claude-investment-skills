@@ -1,0 +1,11 @@
+{
+  "_comment": "VIP persons who bypass the normal $200k threshold and always include sells.",
+  "persons": [
+    {
+      "name_contains": "Andreessen",
+      "tickers": ["META"],
+      "include_sells": true,
+      "note": "Marc Andreessen — Meta board director since 2008. Any size trade is signal."
+    }
+  ]
+}
