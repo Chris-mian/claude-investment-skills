@@ -80,7 +80,7 @@ jobs:
           if [[ -n "$(git status --porcelain $STATE_FILE)" ]]; then
             git add $STATE_FILE
             git commit -m "partner-firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
-            git push
+            git pull --rebase && git push
           else
             echo "No state changes to commit."
           fi

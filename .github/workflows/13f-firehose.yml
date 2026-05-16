@@ -101,7 +101,7 @@ jobs:
           if [[ -n "$(git status --porcelain 13f-firehose/scripts/state.json)" ]]; then
             git add 13f-firehose/scripts/state.json
             git commit -m "13f-firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
-            git push
+            git pull --rebase && git push
           else
             echo "No state changes to commit."
           fi

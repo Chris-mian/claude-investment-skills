@@ -80,7 +80,7 @@ jobs:
           if [[ -n "$(git status --porcelain political-firehose/scripts/state.json)" ]]; then
             git add political-firehose/scripts/state.json
             git commit -m "political-firehose: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
-            git push
+            git pull --rebase && git push
           else
             echo "No state changes."
           fi
