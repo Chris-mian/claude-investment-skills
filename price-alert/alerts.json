@@ -7,14 +7,14 @@
         "op": "below",
         "threshold": 190
       },
-      "note": "ORCL \u8dcc\u7834 $190",
+      "note": "ORCL 跌破 $190",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": true,
       "fired": true,
       "fired_at_utc": "2026-05-12T14:17:41.698601+00:00",
       "fired_at_price": 186.4199981689453,
-      "fired_reason": "$186.42 \u2264 $190.00"
+      "fired_reason": "$186.42 ≤ $190.00"
     },
     {
       "id": "orcl-drop_intraday-d81fb5",
@@ -24,7 +24,7 @@
         "pct": 3,
         "prev_close_at_check": 193.84
       },
-      "note": "ORCL \u5355\u65e5\u8dcc\u5e45\u8d85\u8fc7 3%\uff08\u542b\u76d8\u540e\uff09",
+      "note": "ORCL 单日跌幅超过 3%（含盘后）",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": true,
@@ -40,7 +40,7 @@
         "op": "below",
         "threshold": 190
       },
-      "note": "\u4ef7\u683c\u8dcc\u81f3 $190",
+      "note": "价格跌至 $190",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": false,
@@ -53,7 +53,7 @@
         "op": "drop_intraday",
         "pct": 3
       },
-      "note": "\u5355\u65e5\u8dcc\u5e45\u8fbe 3%\uff08\u542b\u76d8\u540e\uff09",
+      "note": "单日跌幅达 3%（含盘后）",
       "created": "2026-05-11",
       "created_price": 195.9499969482422,
       "active": false,
@@ -113,7 +113,7 @@
       "fired": true,
       "fired_at_utc": "2026-05-11T13:41:06.103846+00:00",
       "fired_at_price": 192.0,
-      "fired_reason": "$192.00 \u2264 $192.00"
+      "fired_reason": "$192.00 ≤ $192.00"
     },
     {
       "id": "nok-below-d15db3",
@@ -122,7 +122,7 @@
         "op": "below",
         "threshold": 11.5
       },
-      "note": "NOK T1 \u52a0\u4ed3 \u2014 put wall 872 OI + \u8ddd 50DMA 20% \u7f13\u51b2",
+      "note": "NOK T1 加仓 — put wall 872 OI + 距 50DMA 20% 缓冲",
       "created": "2026-05-11",
       "created_price": 13.568599700927734,
       "active": true,
@@ -135,7 +135,7 @@
         "op": "below_ma_50",
         "ma_at_check": 10.0506
       },
-      "note": "NOK T2 \u52a0\u4ed3 \u2014 50DMA \u8dcc\u7834\uff08\u6df1\u5ea6\u56de\u8c03\u673a\u4f1a\uff09",
+      "note": "NOK T2 加仓 — 50DMA 跌破（深度回调机会）",
       "created": "2026-05-11",
       "created_price": 13.664999961853027,
       "active": true,
@@ -148,7 +148,7 @@
         "op": "above_ma_200",
         "ma_at_check": 209.8912
       },
-      "note": "ORCL trend-turn \u4fe1\u53f7 \u2014 200DMA $211 \u7a81\u7834\uff08\u91cd\u65b0\u8bc4\u4f30\uff09",
+      "note": "ORCL trend-turn 信号 — 200DMA $211 突破（重新评估）",
       "created": "2026-05-11",
       "created_price": 193.52999877929688,
       "active": true,
@@ -161,7 +161,7 @@
         "op": "below",
         "threshold": 280
       },
-      "note": "POWL T1 \u5165\u573a \u2014 \u56de\u8e29 5/8 base\uff08$1.8B backlog + $400M data center mega \u8ba2\u5355\uff09",
+      "note": "POWL T1 入场 — 回踩 5/8 base（$1.8B backlog + $400M data center mega 订单）",
       "created": "2026-05-11",
       "created_price": 322.0,
       "active": true,
@@ -174,7 +174,7 @@
         "op": "below",
         "threshold": 250
       },
-      "note": "POWL T2 \u52a0\u4ed3 \u2014 \u8fdb\u4e00\u6b65\u6df1\u8c03\uff08\u8ddd 50DMA \u7f13\u51b2 + founder \u5356 \u70b9 post-split equiv\uff09",
+      "note": "POWL T2 加仓 — 进一步深调（距 50DMA 缓冲 + founder 卖 点 post-split equiv）",
       "created": "2026-05-11",
       "created_price": 322.0,
       "active": true,
@@ -188,7 +188,7 @@
         "pct": 5,
         "prev_close_at_check": 296.98
       },
-      "note": "POWL \u5355\u65e5\u66b4\u6da8 5%+ \u2014 \u770b\u662f\u5426\u53c8\u6709\u65b0 hyperscaler \u8ba2\u5355\u516c\u544a",
+      "note": "POWL 单日暴涨 5%+ — 看是否又有新 hyperscaler 订单公告",
       "created": "2026-05-11",
       "created_price": 322.0,
       "active": true,
@@ -201,14 +201,14 @@
         "op": "below",
         "threshold": 13.5
       },
-      "note": "HLIT T1 \u5165\u573a \u2014 Q1 +19% beat / backlog $582M (+87%) / DOCSIS 4.0 \u5546\u7528 ramp\uff0c\u7b49 $14.60 \u76d8\u540e\u9ad8\u4f4d\u56de\u8e29",
+      "note": "HLIT T1 入场 — Q1 +19% beat / backlog $582M (+87%) / DOCSIS 4.0 商用 ramp，等 $14.60 盘后高位回踩",
       "created": "2026-05-11",
       "created_price": 14.6,
       "active": true,
       "fired": true,
       "fired_at_utc": "2026-05-12T01:08:48.177224+00:00",
       "fired_at_price": 12.829999923706055,
-      "fired_reason": "$12.83 \u2264 $13.50"
+      "fired_reason": "$12.83 ≤ $13.50"
     },
     {
       "id": "hlit-below-5f3b91",
@@ -217,7 +217,7 @@
         "op": "below",
         "threshold": 11.5
       },
-      "note": "HLIT T2 \u52a0\u4ed3 \u2014 \u6df1\u8c03\u673a\u4f1a\uff08\u63a5\u8fd1 200DMA $9.94 + cushion\uff0cCharter/Comcast capex \u62c5\u5fe7\u5165\u573a\uff09",
+      "note": "HLIT T2 加仓 — 深调机会（接近 200DMA $9.94 + cushion，Charter/Comcast capex 担忧入场）",
       "created": "2026-05-11",
       "created_price": 14.6,
       "active": true,
@@ -230,7 +230,7 @@
         "op": "above",
         "threshold": 16
       },
-      "note": "NOK T1 take-profit \u51cf\u4ed3 25% \u2014 Gaetano/Crux 12m base case \u4e0b\u9650 + 2027/1 $20 Call wall 72K OI \u9a8c\u8bc1",
+      "note": "NOK T1 take-profit 减仓 25% — Gaetano/Crux 12m base case 下限 + 2027/1 $20 Call wall 72K OI 验证",
       "created": "2026-05-12",
       "created_price": 13.17,
       "active": true,
@@ -243,7 +243,7 @@
         "op": "above",
         "threshold": 20
       },
-      "note": "NOK T2 take-profit \u51cf\u4ed3 50% \u2014 Gaetano 12m bull case + 2027/1 $20 Call DOMINANT OI 72K \u89e6\u53d1",
+      "note": "NOK T2 take-profit 减仓 50% — Gaetano 12m bull case + 2027/1 $20 Call DOMINANT OI 72K 触发",
       "created": "2026-05-12",
       "created_price": 13.17,
       "active": true,
@@ -256,7 +256,7 @@
         "op": "above",
         "threshold": 26
       },
-      "note": "NOK T3 take-profit \u51cf\u4ed3 80% \u2014 Gaetano 18-24m base case \u4e0a\u9650\uff08+100% from $13\uff09\uff0c\u4ec5\u7559 20% \u957f\u671f\u770b bull case $28-32",
+      "note": "NOK T3 take-profit 减仓 80% — Gaetano 18-24m base case 上限（+100% from $13），仅留 20% 长期看 bull case $28-32",
       "created": "2026-05-12",
       "created_price": 13.17,
       "active": true,
@@ -270,7 +270,7 @@
         "pct": 7,
         "prev_close_at_check": 13.17
       },
-      "note": "NOK \u5355\u65e5\u66b4\u6da8 7%+ \u2014 \u53ef\u80fd\u662f hyperscaler \u65b0\u8ba2\u5355 / NVIDIA AI-RAN \u65b0\u6d88\u606f / Q2 earnings \u5077\u8dd1",
+      "note": "NOK 单日暴涨 7%+ — 可能是 hyperscaler 新订单 / NVIDIA AI-RAN 新消息 / Q2 earnings 偷跑",
       "created": "2026-05-12",
       "created_price": 13.17,
       "active": true,
@@ -286,7 +286,7 @@
         "op": "above",
         "threshold": 16.0
       },
-      "note": "\u5356 1/3 \u2014 take-profit ladder \u7b2c1\u6863\u3002Gamma squeeze \u4e2d (5/13 ATH $14.83 \u2192 AH $15.42)\u3002NVDA + Anduril + JPM PT \u20ac12 + Argus Buy/$15\u3002\u6ce8\u610f 5/15 OPEX \u540e\u56de\u8c03\u98ce\u9669\uff0c\u5230\u4e86\u5c31\u5356",
+      "note": "卖 1/3 — take-profit ladder 第1档。Gamma squeeze 中 (5/13 ATH $14.83 → AH $15.42)。NVDA + Anduril + JPM PT €12 + Argus Buy/$15。注意 5/15 OPEX 后回调风险，到了就卖",
       "created": "2026-05-13",
       "created_price": 14.710000038146973,
       "active": false,
@@ -299,14 +299,14 @@
         "op": "below",
         "threshold": 14.0
       },
-      "note": "OPEX hangover \u7b2c\u4e00\u6ce2 \u2014 \u52a0\u4ed3 1/3 \u4e70\u56de\u3002 = \u5fc3\u7406\u6574\u6570 + 6/18 put wall 32K OI + 6/18 max pain \u5171\u632f\u3002\u4eca\u5929\u5356\u4e86 1/3@$15+\uff0c\u8fd9\u662f\u56de\u4e70\u7b2c\u4e00\u6863\u3002",
+      "note": "OPEX hangover 第一波 — 加仓 1/3 买回。 = 心理整数 + 6/18 put wall 32K OI + 6/18 max pain 共振。今天卖了 1/3@$15+，这是回买第一档。",
       "created": "2026-05-13",
       "created_price": 14.710000038146973,
       "active": true,
       "fired": true,
       "fired_at_utc": "2026-05-15T14:16:14.459912+00:00",
       "fired_at_price": 13.90999984741211,
-      "fired_reason": "$13.91 \u2264 $14.00"
+      "fired_reason": "$13.91 ≤ $14.00"
     },
     {
       "id": "nok-below-c32bb7",
@@ -315,7 +315,7 @@
         "op": "below",
         "threshold": 13.2
       },
-      "note": "Gap fill + max pain \u5171\u632f \u2014 \u518d\u52a0 1/3\u3002$13.17 = 5/13 gap \u8d77\u70b9 (\u4eca\u5929 gap up \u7f3a\u53e3) + 5/22 max pain + 5/15 max pain\u3002\u6280\u672f+\u671f\u6743\u4e09\u91cd\u5171\u632f\uff0c\u6700\u7406\u60f3 buy-back \u4f4d\u3002",
+      "note": "Gap fill + max pain 共振 — 再加 1/3。$13.17 = 5/13 gap 起点 (今天 gap up 缺口) + 5/22 max pain + 5/15 max pain。技术+期权三重共振，最理想 buy-back 位。",
       "created": "2026-05-13",
       "created_price": 14.710000038146973,
       "active": true,
@@ -380,9 +380,321 @@
         "op": "below",
         "threshold": 13.5
       },
-      "note": "\ud83d\udcde NOK CALL \u4e70\u5165\u4fe1\u53f7\n\n\u73b0\u4ef7\u8dcc\u5230 $13.50 \u4ee5\u4e0b = \u671f\u6743\u4e70\u5165\u7a97\u53e3\u5f00\u542f\u3002\n\n\u63a8\u8350\u64cd\u4f5c\uff1a\n  \u2022 5/29 $14 call\uff08\u7a33\u5065\uff0c7% \u76ee\u6807\uff0cgamma\u7a97\u53e3\u591f\uff09\n  \u2022 5/29 $15 call\uff08\u6fc0\u8fdb\uff0c15/22 \u768428K OI\u5899\u8981\u7a81\u7834\uff09\n  \u2022 6/5 $14 call\uff08\u5982\u679c\u60f3\u7559\u66f4\u591a\u65f6\u95f4\uff09\n\n\u4e0d\u4e70\u7684\u7406\u7531\uff1a5/22 max pain $13 = \u5f15\u529b\u8fd8\u5728\uff0c\u7b49\u6210\u4ea4\u91cf\u91cd\u56de 130M+ \u518d\u786e\u8ba4\u3002\n\u4e70\u7684\u7406\u7531\uff1a$13.17 = gap fill + max pain \u4e09\u91cd\u5171\u632f\uff0ccall \u6700\u4fbf\u5b9c\u65f6\u4e70\u3002\n\n\u76ee\u6807\u51fa\u573a\uff1a$15 sell 1/3\uff0c$16 sell 1/3\uff0c$20 sell 1/3\u3002",
+      "note": "📞 NOK CALL 买入信号\n\n现价跌到 $13.50 以下 = 期权买入窗口开启。\n\n推荐操作：\n  • 5/29 $14 call（稳健，7% 目标，gamma窗口够）\n  • 5/29 $15 call（激进，15/22 的28K OI墙要突破）\n  • 6/5 $14 call（如果想留更多时间）\n\n不买的理由：5/22 max pain $13 = 引力还在，等成交量重回 130M+ 再确认。\n买的理由：$13.17 = gap fill + max pain 三重共振，call 最便宜时买。\n\n目标出场：$15 sell 1/3，$16 sell 1/3，$20 sell 1/3。",
       "created": "2026-05-15",
       "created_price": 13.95,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "vst-below-157802",
+      "ticker": "VST",
+      "condition": {
+        "op": "below",
+        "threshold": 148
+      },
+      "note": "VST T1 入场 — Vistra AI核电IPP. Max Pain $160 (-12.7% 牛引力), Put Wall $150 (OI 9,319). IRA PTC $43.75/MWh 保底, Microsoft 15年PPA. Forward PE 14.2x 最便宜核电股. 当前价$139 已在T1以下！",
+      "created": "2026-05-16",
+      "created_price": 139.68,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "vst-below-d46859",
+      "ticker": "VST",
+      "condition": {
+        "op": "below",
+        "threshold": 128
+      },
+      "note": "VST T2 加仓 — 深调机会. 接近200DMA支撑. Put Wall $150确认失守则等此位加仓.",
+      "created": "2026-05-16",
+      "created_price": 139.68,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "vst-above-905e44",
+      "ticker": "VST",
+      "condition": {
+        "op": "above",
+        "threshold": 160
+      },
+      "note": "VST Max Pain $160 达到 — 考虑减仓1/3, 检查期权墙是否移动. ERCOT夏季峰值可能推动更高.",
+      "created": "2026-05-16",
+      "created_price": 139.68,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "ceg-below-5f4bc0",
+      "ticker": "CEG",
+      "condition": {
+        "op": "below",
+        "threshold": 265
+      },
+      "note": "CEG T1 建仓 — Constellation Energy最大私营核电商. 最强牛引力: Max Pain $310 (-13.8%), PCR=1.80逆向买入信号. Put Wall $300 (OI 7,324). FERC幕后直联裁定6-7月 = +$30-50/股催化剂.",
+      "created": "2026-05-16",
+      "created_price": 267.2,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "ceg-below-7ee90d",
+      "ticker": "CEG",
+      "condition": {
+        "op": "below",
+        "threshold": 245
+      },
+      "note": "CEG T2 加仓 — 更好安全边际. FERC否决场景下支撑位. 公司$285/股回购计划背书.",
+      "created": "2026-05-16",
+      "created_price": 267.2,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "ceg-above-1e411a",
+      "ticker": "CEG",
+      "condition": {
+        "op": "above",
+        "threshold": 310
+      },
+      "note": "CEG Max Pain $310 达到 — 期权做市商对冲买入完成. 评估FERC进展决定是否加仓or减仓1/3.",
+      "created": "2026-05-16",
+      "created_price": 267.2,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "fslr-below-979517",
+      "ticker": "FSLR",
+      "condition": {
+        "op": "below",
+        "threshold": 218
+      },
+      "note": "FSLR T1 买入 — First Solar净现金(无债务), Forward PE 13.8x(行业最便宜). IRA 45X制造税收抵免+关税壁垒. 订单backlog $20B(4年收入). Max Pain $210 牛引力.",
+      "created": "2026-05-16",
+      "created_price": 233.37,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "fslr-below-8d9f95",
+      "ticker": "FSLR",
+      "condition": {
+        "op": "below",
+        "threshold": 198
+      },
+      "note": "FSLR T2 加仓 — $200心理关口+安全边际. 美国制造太阳能唯一壁垒标的.",
+      "created": "2026-05-16",
+      "created_price": 233.37,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "sei-below-09754d",
+      "ticker": "SEI",
+      "condition": {
+        "op": "below",
+        "threshold": 74
+      },
+      "note": "SEI T1 保守入场 — Solaris AI电力即服务. Druckenmiller Q3 2025在$20建仓. Hatchbo 500MW 10年合同. Max Pain $70, Put Wall $57.5 (OI 2,163). 仅474家机构持有=未被发现.",
+      "created": "2026-05-16",
+      "created_price": 78.58,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "sei-below-ba0389",
+      "ticker": "SEI",
+      "condition": {
+        "op": "below",
+        "threshold": 60
+      },
+      "note": "SEI T2 激进入场 — Put Wall $57.5强支撑区. 如果论文不变, 这是最佳买点. IV=84%不买期权买股票.",
+      "created": "2026-05-16",
+      "created_price": 78.58,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "ccj-below-a7eb2e",
+      "ticker": "CCJ",
+      "condition": {
+        "op": "below",
+        "threshold": 95
+      },
+      "note": "CCJ T1 买入 — Cameco全球最大铀矿商. 铀长期合同价$90/磅(2008以来最高). 持有Westinghouse 50%. AI数据中心推动核电复兴. 净现金资产负债表.",
+      "created": "2026-05-16",
+      "created_price": 107.51,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "ccj-below-1d56ca",
+      "ticker": "CCJ",
+      "condition": {
+        "op": "below",
+        "threshold": 82
+      },
+      "note": "CCJ T2 加仓 — 接近200DMA深调机会. 铀超级周期长期逻辑不变.",
+      "created": "2026-05-16",
+      "created_price": 107.51,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "hubb-below-07686c",
+      "ticker": "HUBB",
+      "condition": {
+        "op": "below",
+        "threshold": 445
+      },
+      "note": "HUBB T1 买入 — Hubbell电网设备最被低估标的. Forward PE 22.1x vs ETN 27.8x(便宜20%). Float仅53M股(极小). Wellington Q4增持+140%. 99.6%机构持有=筹码极干净.",
+      "created": "2026-05-16",
+      "created_price": 479.97,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "hubb-below-e4e230",
+      "ticker": "HUBB",
+      "condition": {
+        "op": "below",
+        "threshold": 400
+      },
+      "note": "HUBB T2 大幅加仓 — 接近200DMA强支撑. 两党基础设施法$65B输电网络投资背书.",
+      "created": "2026-05-16",
+      "created_price": 479.97,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "bwxt-below-090a51",
+      "ticker": "BWXT",
+      "condition": {
+        "op": "below",
+        "threshold": 185
+      },
+      "note": "BWXT T1 买入 — BWX Technologies核反应堆零部件垄断. BlackRock持股13.6%. 为美国海军核潜艇供应反应堆. SMR商业化受益者. Beta低=宏观避风港.",
+      "created": "2026-05-16",
+      "created_price": 204.72,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "bwxt-below-155ca6",
+      "ticker": "BWXT",
+      "condition": {
+        "op": "below",
+        "threshold": 165
+      },
+      "note": "BWXT T2 加仓 — 深调入场, 接近200DMA. 内部人卖出仅$320K(全组最低之一)=管理层看好.",
+      "created": "2026-05-16",
+      "created_price": 204.72,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gev-below-aa3145",
+      "ticker": "GEV",
+      "condition": {
+        "op": "below",
+        "threshold": 1005
+      },
+      "note": "GEV T1 等待 — GE Vernova. 当前Max Pain $900 vs 现价$1049 = 熊引力+16.6%, 不追! 等回调至$980-1010再入场. 电网设备+燃气轮机AI数据中心受益.",
+      "created": "2026-05-16",
+      "created_price": 1049.23,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gev-below-af52cb",
+      "ticker": "GEV",
+      "condition": {
+        "op": "below",
+        "threshold": 920
+      },
+      "note": "GEV T2 Max Pain区 — 跌到$900-940 = Max Pain支撑区, 做市商开始买入. 净现金+FCF $1.1B支撑.",
+      "created": "2026-05-16",
+      "created_price": 1049.23,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "etn-below-6da30c",
+      "ticker": "ETN",
+      "condition": {
+        "op": "below",
+        "threshold": 360
+      },
+      "note": "ETN T1 买入 — Eaton电力管理龙头. 数据中心配电设备垄断地位. FCF $3.2B. AI数据中心每个机架都需要Eaton UPS/PDU. 等-10%回调.",
+      "created": "2026-05-16",
+      "created_price": 399.44,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "etn-below-bba954",
+      "ticker": "ETN",
+      "condition": {
+        "op": "below",
+        "threshold": 325
+      },
+      "note": "ETN T2 加仓 — 深调机会. 接近200DMA.",
+      "created": "2026-05-16",
+      "created_price": 399.44,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "mtz-below-3f0f1e",
+      "ticker": "MTZ",
+      "condition": {
+        "op": "below",
+        "threshold": 375
+      },
+      "note": "MTZ T1 买入 — MasTec输电线路施工. Mas家族21.5%持股不卖=最好内部人信号. 两党基础设施法大量政府合同. FCF $850M, Net Debt/EBITDA 2.9x尚可接受.",
+      "created": "2026-05-16",
+      "created_price": 414.9,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "mtz-below-a2ea52",
+      "ticker": "MTZ",
+      "condition": {
+        "op": "below",
+        "threshold": 338
+      },
+      "note": "MTZ T2 加仓 — 深调机会, 接近200DMA.",
+      "created": "2026-05-16",
+      "created_price": 414.9,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "nrg-below-631763",
+      "ticker": "NRG",
+      "condition": {
+        "op": "below",
+        "threshold": 110
+      },
+      "note": "NRG 观察 — NRG Energy传统IPP. 债务较高(3.2x)=5%利率环境风险. 仅在$110以下考虑, 等待基本面改善或债务降低再建仓.",
+      "created": "2026-05-16",
+      "created_price": 127.81,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gev-drop_intraday-856814",
+      "ticker": "GEV",
+      "condition": {
+        "op": "drop_intraday",
+        "pct": 8
+      },
+      "note": "GEV 单日暴跌8% — 可能触发快速入场机会. 检查是否有基本面变化再决定.",
+      "created": "2026-05-16",
+      "created_price": 1049.23,
       "active": true,
       "fired": false
     }
