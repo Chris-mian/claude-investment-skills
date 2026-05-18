@@ -1040,6 +1040,71 @@
       "created_price": 198.38,
       "active": true,
       "fired": false
+    },
+    {
+      "id": "gdx-below-c56ec7",
+      "ticker": "GDX",
+      "condition": {
+        "op": "below",
+        "threshold": 85
+      },
+      "note": "GDX T1 $85 (200DMA + 心理位) - GDXU 试探仓 15% / 估算 GDXU $135-145",
+      "created": "2026-05-18",
+      "created_price": 87.35,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gdx-below-975168",
+      "ticker": "GDX",
+      "condition": {
+        "op": "below",
+        "threshold": 80
+      },
+      "note": "GDX T2 $80 (38.2% Fib + 4月密集区) - GDXU 加仓 30% / 估算 GDXU $115-125",
+      "created": "2026-05-18",
+      "created_price": 87.35,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gdx-below-9c2df8",
+      "ticker": "GDX",
+      "condition": {
+        "op": "below",
+        "threshold": 72
+      },
+      "note": "GDX T3 $72 (4月低 + State 4 capitulation) - GDXU 重仓 35% / 估算 GDXU $90-100",
+      "created": "2026-05-18",
+      "created_price": 87.35,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gdx-below-36517f",
+      "ticker": "GDX",
+      "condition": {
+        "op": "below",
+        "threshold": 62
+      },
+      "note": "GDX T4 $62 (52W低附近灾难位) - GDXU 最后 20% / 一年1-2次机会",
+      "created": "2026-05-18",
+      "created_price": 87.35,
+      "active": true,
+      "fired": false
+    },
+    {
+      "id": "gld-below-4a5fe7",
+      "ticker": "GLD",
+      "condition": {
+        "op": "below",
+        "threshold": 400
+      },
+      "note": "GLD <$400 (黄金触 200DMA) - 黄金本身回调到 trend line，confirm GDX 加仓",
+      "created": "2026-05-18",
+      "created_price": 417.29,
+      "active": true,
+      "fired": false
     }
   ]
 }
