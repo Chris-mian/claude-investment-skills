@@ -1,5 +1,23 @@
 {
-  "congress_seen": {},
+  "congress_seen": {
+    "Josh Gottheimer": [
+      "2026-04-27|AMD|Purchase|$1,001 - $15,000",
+      "2026-04-23|AMD|Purchase|$1,001 - $15,000",
+      "2026-04-09|ALLY|Sale|$1,001 - $15,000",
+      "2026-04-09|T|Sale|$1,001 - $15,000",
+      "2026-04-06|CBZ|Purchase|$1,001 - $15,000",
+      "2026-04-09|DLTR|Sale|$1,001 - $15,000",
+      "2026-04-06|FWRG|Purchase|$1,001 - $15,000",
+      "2026-04-15|FCX|Purchase|$1,001 - $15,000",
+      "2026-04-16|GS|Purchase|$1,001 - $15,000",
+      "2026-04-13|IFNNY|Purchase|$1,001 - $15,000",
+      "2026-04-13|INTA|Purchase|$1,001 - $15,000",
+      "2026-04-09|MKTX|Sale|$1,001 - $15,000",
+      "2026-04-06|NTES|Purchase|$1,001 - $15,000",
+      "2026-04-24|NOW|Sale|$1,001 - $15,000",
+      "2026-04-09|VLY|Sale|$1,001 - $15,000"
+    ]
+  },
   "oge_seen": [
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/00B0A050F80312EE85258D16002C0536/$FILE/Michael-W-Faulkender-2025-278TERM.pdf",
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/056ABAA54A1FAC1585258D8600344DDF/$FILE/Douglas-J-Burgum-11.13.2025-278T.pdf",
@@ -204,5 +222,5 @@
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/FED6F4F51D33882F85258C8A002C760E/$FILE/Sean-Duffy-04.23.2025-278T.pdf",
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/FF08033E100E1A0885258C68002C8112/$FILE/McMaster, Sean  AMENDED final278.pdf"
   ],
-  "last_run_iso": "2026-05-19T21:28:43.291695+00:00"
+  "last_run_iso": "2026-05-20T13:54:51.326766+00:00"
 }
