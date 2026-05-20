@@ -79,8 +79,18 @@ def send_telegram(message: str) -> bool:
         "parse_mode": "Markdown",
         "disable_web_page_preview": True,
     }, timeout=10)
-    if r.status_code != 200:
-        print(f"ERROR: Telegram returned {r.status_code}: {r.text}", file=sys.stderr)
+    if r.status_code == 200:
+        return True
+    # Markdown parse failures (e.g. a lone `_`/`*` in a note) return 400 and drop
+    # the message. Retry as plain text so the alert always lands.
+    print(f"WARN: Telegram Markdown send returned {r.status_code}: {r.text} — retrying as plain text", file=sys.stderr)
+    r2 = requests.post(url, json={
+        "chat_id": chat_id,
+        "text": message,
+        "disable_web_page_preview": True,
+    }, timeout=10)
+    if r2.status_code != 200:
+        print(f"ERROR: Telegram plain-text retry returned {r2.status_code}: {r2.text}", file=sys.stderr)
         return False
     return True
 
