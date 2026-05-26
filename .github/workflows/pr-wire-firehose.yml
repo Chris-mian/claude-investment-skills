@@ -37,7 +37,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install --quiet 'requests>=2.31'
+        run: pip install --quiet 'requests>=2.31' 'yfinance>=0.2.40'
 
       - name: Run PR wire poller
         env:

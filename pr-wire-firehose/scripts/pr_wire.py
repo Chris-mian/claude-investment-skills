@@ -74,6 +74,76 @@ FEEDS: list[tuple[str, str, str]] = [
      "GlobeNewswire%20-%20News%20about%20Public%20Companies", "broad"),
 ]
 
+# ── Verification gate / 验证闸门 ─────────────────────────────────────────
+# Extract a public exchange:ticker from the PR text (e.g. "(NASDAQ: IREN)").
+# 从新闻稿里抽取交易所:代码, 用来验证它是个真上市可交易的票.
+_RX_TICKER = re.compile(
+    r"\(?\s*(?:NASDAQ|NYSE\s*American|NYSE\s*Arca|NYSE|AMEX|CBOE|"
+    r"OTCQB|OTCQX|OTC)\s*:\s*([A-Za-z][A-Za-z.\-]{0,5})\s*\)?", re.I)
+# Targeted newsrooms map to a known ticker (the PR may not print "(NASDAQ:…)").
+_FEED_TICKER = {"NVIDIA Newsroom": "NVDA", "AMD Newsroom": "AMD"}
+# Market-cap floor: drops micro-cap "AI" shells (e.g. Global Mofy's $8M raise).
+# 市值下限: 滤掉 Global Mofy 那种圈钱小盘壳. 设 0 关闭.
+MIN_MCAP = float(os.environ.get("PR_MIN_MCAP", "500000000"))  # $500M default
+
+# Optional: tag names that are in our semiconductor universe (cross-skill).
+_SEMI_UNIVERSE: dict = {}
+
+
+def _load_semi_universe() -> dict:
+    try:
+        p = (SCRIPT_DIR.parent.parent / "semiconductor-insider-screener"
+             / "scripts" / "universe.json")
+        d = json.loads(p.read_text())
+        return {r["ticker"].upper(): r for r in d.get("tickers", [])}
+    except Exception:
+        return {}
+
+
+def verify_and_enrich(ticker: str) -> dict | None:
+    """
+    GATE: confirm `ticker` is a real public equity with mcap >= floor; return a
+    rule-based quick-read (mcap / price / % below 52w high). None = fails gate.
+    闸门: 确认是真上市票且市值过线; 返回规则型快速读数. None = 不通过.
+    """
+    try:
+        import yfinance as yf
+        t = yf.Ticker(ticker)
+        fi = t.fast_info
+
+        def _g(*names):
+            for n in names:
+                v = getattr(fi, n, None)
+                if v is None:
+                    try:
+                        v = fi[n]
+                    except Exception:
+                        v = None
+                if v:
+                    return v
+            return None
+
+        mcap = _g("market_cap", "marketCap")
+        last = _g("last_price", "lastPrice")
+        hi = _g("year_high", "yearHigh")
+        if not mcap:  # fast_info miss → fall back to .info (slower, reliable)
+            try:
+                info = t.info or {}
+                mcap = info.get("marketCap")
+                last = last or info.get("currentPrice") or info.get("regularMarketPrice")
+                hi = hi or info.get("fiftyTwoWeekHigh")
+            except Exception:
+                pass
+        if not mcap or mcap < MIN_MCAP:
+            return None
+        below = ((hi - last) / hi * 100) if (hi and last) else None
+        return {"ticker": ticker.upper(), "mcap": float(mcap),
+                "price": float(last) if last else None, "below_52wh": below}
+    except Exception as e:
+        print(f"[WARN] verify {ticker}: {e}", file=sys.stderr)
+        return None
+
+
 # AI-infrastructure keywords for filtering BROAD feeds.
 # 宽 feed 用的 AI 基建关键词 — 命中才推, 否则太吵.
 _AI_KEYWORDS = re.compile(
@@ -163,7 +233,7 @@ def send_telegram(msg: str) -> bool:
     return r2.status_code == 200
 
 
-def format_alert(source: str, item: dict, investors: list) -> str:
+def format_alert(source: str, item: dict, investors: list, enr: dict) -> str:
     lines = []
     if investors:
         tier, canon = investors[0]
@@ -178,15 +248,38 @@ def format_alert(source: str, item: dict, investors: list) -> str:
     if summ:
         summ = re.sub(r"<[^>]+>", "", summ)
         lines.append(summ[:240] + ("…" if len(summ) > 240 else ""))
+
+    # ── Quick read (rule-based, NO LLM) ──
+    mc = enr["mcap"]
+    mcs = (f"${mc/1e12:.2f}T" if mc >= 1e12 else
+           f"${mc/1e9:.1f}B" if mc >= 1e9 else f"${mc/1e6:.0f}M")
+    px = f" · ${enr['price']:.2f}" if enr.get("price") else ""
+    qr = f"\n📊 `{enr['ticker']}` · {mcs} mcap{px}"
+    if enr.get("below_52wh") is not None:
+        qr += f" · {enr['below_52wh']:.0f}% below 52wH"
+    lines.append(qr)
+    # one-line heuristic read
+    b = enr.get("below_52wh")
+    if b is not None and b < 5:
+        lines.append("⚠️ near 52w high — extended, don't chase the spike")
+    elif b is not None and b >= 25:
+        lines.append("🟢 well off its high — room if the news is real")
+    s = enr.get("semi")
+    if s:
+        lines.append(f"🔬 in semi universe · {s['segment']} · 卡脖子 {s['chokepoint']}")
+
     if item.get("link"):
         lines.append(f"\n[Read ›]({item['link']})")
     return "\n".join(lines)
 
 
 def main() -> int:
+    global _SEMI_UNIVERSE
+    _SEMI_UNIVERSE = _load_semi_universe()
     seen = load_state()
     total_new = 0
     total_alerts = 0
+    total_gated = 0
 
     for source, url, mode in FEEDS:
         try:
@@ -221,14 +314,36 @@ def main() -> int:
                 if not relevant:
                     continue
 
-            if send_telegram(format_alert(source, item, investors)):
+            # ── VERIFICATION GATE: must be a real public, tradeable ticker ──
+            # Targeted feeds → known ticker; broad feeds → extract from PR text.
+            ticker = _FEED_TICKER.get(source)
+            if not ticker:
+                m = _RX_TICKER.search(blob)
+                ticker = m.group(1).upper() if m else None
+            if not ticker:
+                total_gated += 1
+                print(f"[GATE-drop] no public ticker: {item['title'][:60]}",
+                      file=sys.stderr)
+                continue
+            enr = verify_and_enrich(ticker)
+            if not enr:
+                total_gated += 1
+                print(f"[GATE-drop] {ticker}: not verifiable / mcap < "
+                      f"${MIN_MCAP/1e6:.0f}M floor — {item['title'][:50]}",
+                      file=sys.stderr)
+                continue
+            enr["semi"] = _SEMI_UNIVERSE.get(ticker)
+
+            if send_telegram(format_alert(source, item, investors, enr)):
                 total_alerts += 1
-                print(f"[ALERT] {source}: {item['title'][:70]}", file=sys.stderr)
+                print(f"[ALERT] {ticker} {source}: {item['title'][:60]}",
+                      file=sys.stderr)
                 time.sleep(0.5)
 
     if not TEST_MODE:
         save_state(seen)
-    print(f"[DONE] new={total_new} alerts={total_alerts}", file=sys.stderr)
+    print(f"[DONE] new={total_new} alerts={total_alerts} gated_out={total_gated}",
+          file=sys.stderr)
     return 0
 
 
