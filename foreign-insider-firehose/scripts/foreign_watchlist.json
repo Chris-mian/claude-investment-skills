@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "purpose": "Foreign issuers (exempt from US Form 4) whose PDMR / Managers' Transactions we track via SEC 6-K. Public default list = obvious large-cap ADRs, no personal positions. CIKs resolved from SEC company_tickers.json.",
+    "updated": "2026-05-25"
+  },
+  "tickers": [
+    {"ticker": "NOK",  "name": "Nokia (Finland)",            "cik": "0000924613"},
+    {"ticker": "ASML", "name": "ASML (Netherlands)",         "cik": "0000937966"},
+    {"ticker": "TSM",  "name": "TSMC (Taiwan)",              "cik": "0001046179"},
+    {"ticker": "TSEM", "name": "Tower Semiconductor (Israel)","cik": "0000928876"},
+    {"ticker": "SAP",  "name": "SAP (Germany)",              "cik": "0001000184"},
+    {"ticker": "ERIC", "name": "Ericsson (Sweden)",          "cik": "0000717826"},
+    {"ticker": "STM",  "name": "STMicroelectronics",         "cik": "0000932787"},
+    {"ticker": "NVO",  "name": "Novo Nordisk (Denmark)",     "cik": "0000353278"}
+  ]
+}

@@ -1,0 +1,74 @@
+name: Foreign Insider Firehose (EU/non-US PDMR buys)
+
+# Insider BUYS for foreign issuers that are exempt from US Form 4 (Nokia, ASML,
+# TSMC, Tower, SAP, Ericsson, STM, Novo...). Watches each name's recent SEC 6-K
+# filings, detects the MAR Art.19 "Managers' Transactions" / PDMR / Directors'
+# Dealings ones, and classifies with the same discipline as US Form 4:
+#   BUY (open-market) = signal · AWARD (board fee / LTI / RSU) = excluded · SELL.
+# Would have caught Nokia's 2026-05-25 Owczarek ~$500K buy while excluding the
+# CEO's co-investment plan and the board-fee share awards.
+#
+# Cadence: twice on weekdays. 6-K furnishing lags the trade ~1-2 business days,
+# so high frequency isn't needed. State dedup via committed accession list.
+
+on:
+  schedule:
+    - cron: '0 13 * * 1-5'   #  9 AM ET
+    - cron: '0 22 * * 1-5'   #  6 PM ET (catches the day's 6-K furnishings)
+  workflow_dispatch:
+    inputs:
+      include_sells:
+        description: 'Also alert disposals (1=yes)'
+        required: false
+        default: '0'
+      min_buy_usd:
+        description: 'Min buy value USD (default 25000)'
+        required: false
+        default: '25000'
+      test_mode:
+        description: 'Print to log, no Telegram / no state save'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write  # commit state
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet 'requests>=2.31'
+
+      - name: Run foreign-insider scanner
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          INCLUDE_SELLS: ${{ inputs.include_sells == '1' && '1' || '' }}
+          MIN_BUY_USD:   ${{ inputs.min_buy_usd || '25000' }}
+          TEST_MODE:     ${{ inputs.test_mode == 'true' && '1' || '' }}
+          EDGAR_USER_AGENT: "ssurmiczizhao@gmail.com foreign-insider-firehose/1.0 (ci)"
+        run: python foreign-insider-firehose/scripts/foreign_insider.py
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          STATE_FILE="foreign-insider-firehose/scripts/foreign_insider_state.json"
+          if [[ -n "$(git status --porcelain $STATE_FILE)" ]]; then
+            git add $STATE_FILE
+            git commit -m "foreign-insider: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase && git push
+          else
+            echo "No state changes to commit."
+          fi
