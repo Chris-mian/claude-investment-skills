@@ -1,0 +1,67 @@
+name: Semiconductor Insider-Buy Screener (next-VSH finder)
+
+# Finds the NEXT VSH: a semiconductor name (from universe.json, ~70 tickers
+# annotated with segment / CPU-relation / chokepoint) where insiders are BUYING
+# open-market (Form-4 code P) AND the stock has NOT already doubled (skip the
+# too-late ones like VSH after its $18->$50 run). Pulls openinsider recent
+# purchases, intersects with the semi universe, applies the doubled filter,
+# annotates with chokepoint(卡脖子), and alerts.
+#
+# Cadence: twice on weekdays (Form 4 buys filed continuously, peak post-close).
+
+on:
+  schedule:
+    - cron: '30 14 * * 1-5'   # 10:30 AM ET
+    - cron: '0 22 * * 1-5'    #  6:00 PM ET (post-close Form 4 dump)
+  workflow_dispatch:
+    inputs:
+      min_buy_usd:
+        description: 'Min insider buy USD (default 50000)'
+        required: false
+        default: '50000'
+      max_run_pct:
+        description: 'Only alert if run-since-buy <= this % (default 80)'
+        required: false
+        default: '80'
+      test_mode:
+        description: 'Print to log, no Telegram / no state save'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install --quiet 'requests>=2.31' 'yfinance>=0.2.40' 'pandas>=2.0'
+      - name: Run semi insider screener
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          MIN_BUY_USD: ${{ inputs.min_buy_usd || '50000' }}
+          MAX_RUN_PCT: ${{ inputs.max_run_pct || '80' }}
+          TEST_MODE:   ${{ inputs.test_mode == 'true' && '1' || '' }}
+        run: python semiconductor-insider-screener/scripts/semi_insider_screener.py
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          STATE="semiconductor-insider-screener/scripts/screener_state.json"
+          if [[ -n "$(git status --porcelain $STATE)" ]]; then
+            git add $STATE
+            git commit -m "semi-screener: state checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase && git push
+          else
+            echo "No state changes."
+          fi

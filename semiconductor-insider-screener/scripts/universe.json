@@ -1,0 +1,569 @@
+{
+  "_meta": {
+    "purpose": "Semiconductor universe for the semi insider-buy screener. 2026 focus = semis. cpu_relation: direct/enabling/peripheral. chokepoint(卡脖子): extreme/high/medium/low.",
+    "updated": "2026-05-26",
+    "count": 70
+  },
+  "tickers": [
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA",
+      "segment": "compute-gpu",
+      "cpu_relation": "direct",
+      "chokepoint": "high",
+      "note": "GPU+CUDA moat = AI training standard"
+    },
+    {
+      "ticker": "AMD",
+      "name": "Advanced Micro Devices",
+      "segment": "compute-cpu-gpu",
+      "cpu_relation": "direct",
+      "chokepoint": "medium",
+      "note": "#2 AI GPU + x86 server CPU"
+    },
+    {
+      "ticker": "INTC",
+      "name": "Intel",
+      "segment": "compute-cpu-foundry",
+      "cpu_relation": "direct",
+      "chokepoint": "medium",
+      "note": "x86 incumbent + struggling foundry"
+    },
+    {
+      "ticker": "ARM",
+      "name": "Arm Holdings (ADR/UK)",
+      "segment": "compute-cpu-ip",
+      "cpu_relation": "direct",
+      "chokepoint": "high",
+      "note": "ISA under nearly every SoC; architecture chokepoint"
+    },
+    {
+      "ticker": "QCOM",
+      "name": "Qualcomm",
+      "segment": "compute-soc-modem",
+      "cpu_relation": "direct",
+      "chokepoint": "medium",
+      "note": "mobile SoC+modem; pivoting to edge AI"
+    },
+    {
+      "ticker": "AVGO",
+      "name": "Broadcom",
+      "segment": "compute-custom-asic-networking",
+      "cpu_relation": "direct",
+      "chokepoint": "high",
+      "note": "custom AI ASIC + networking duopoly"
+    },
+    {
+      "ticker": "MRVL",
+      "name": "Marvell",
+      "segment": "compute-custom-asic-networking",
+      "cpu_relation": "direct",
+      "chokepoint": "high",
+      "note": "custom AI silicon + optical DSP"
+    },
+    {
+      "ticker": "SMCI",
+      "name": "Super Micro",
+      "segment": "ai-server-system",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "AI server integrator, commodity assembly"
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron",
+      "segment": "memory-dram-nand-hbm",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "only US HBM maker; HBM = AI memory choke"
+    },
+    {
+      "ticker": "SNDK",
+      "name": "Sandisk",
+      "segment": "storage-nand",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "NAND commodity, cyclical"
+    },
+    {
+      "ticker": "WDC",
+      "name": "Western Digital",
+      "segment": "storage-hdd-nand",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "nearline HDD + NAND commodity"
+    },
+    {
+      "ticker": "STX",
+      "name": "Seagate",
+      "segment": "storage-hdd",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "nearline HDD HAMR; commodity consolidated"
+    },
+    {
+      "ticker": "SNPS",
+      "name": "Synopsys",
+      "segment": "eda-ip",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "EDA duopoly; no advanced chip without it"
+    },
+    {
+      "ticker": "CDNS",
+      "name": "Cadence",
+      "segment": "eda-ip",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "EDA duopoly; design-flow lock-in"
+    },
+    {
+      "ticker": "RMBS",
+      "name": "Rambus",
+      "segment": "memory-ip-interface",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "memory-interface IP + HBM/CXL chips"
+    },
+    {
+      "ticker": "ASML",
+      "name": "ASML (ADR/NL)",
+      "segment": "wfe-litho",
+      "cpu_relation": "enabling",
+      "chokepoint": "extreme",
+      "note": "EUV monopoly; hardest-to-replace link"
+    },
+    {
+      "ticker": "AMAT",
+      "name": "Applied Materials",
+      "segment": "wfe-broad",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "broadest WFE toolset; depo leader"
+    },
+    {
+      "ticker": "LRCX",
+      "name": "Lam Research",
+      "segment": "wfe-etch-depo",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "etch + memory-process leader"
+    },
+    {
+      "ticker": "KLAC",
+      "name": "KLA",
+      "segment": "wfe-process-control",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "inspection/metrology near-monopoly"
+    },
+    {
+      "ticker": "TER",
+      "name": "Teradyne",
+      "segment": "test-ate",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "ATE test duopoly w/ Advantest"
+    },
+    {
+      "ticker": "ACLS",
+      "name": "Axcelis",
+      "segment": "wfe-ion-implant",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "ion implant; power/mature-node leverage"
+    },
+    {
+      "ticker": "ONTO",
+      "name": "Onto Innovation",
+      "segment": "wfe-metrology",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "metrology + adv-packaging inspection"
+    },
+    {
+      "ticker": "COHU",
+      "name": "Cohu",
+      "segment": "test-handlers",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "test handlers; back-end commoditized"
+    },
+    {
+      "ticker": "FORM",
+      "name": "FormFactor",
+      "segment": "test-probe-cards",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "probe-card leader; HBM wafer-sort choke"
+    },
+    {
+      "ticker": "KLIC",
+      "name": "Kulicke & Soffa",
+      "segment": "assembly-bonding",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "bonders; adv-packaging optionality"
+    },
+    {
+      "ticker": "CAMT",
+      "name": "Camtek (ADR/IL)",
+      "segment": "wfe-inspection",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "adv-packaging/HBM inspection"
+    },
+    {
+      "ticker": "AEIS",
+      "name": "Advanced Energy",
+      "segment": "wfe-power-subsystems",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "RF/DC power into etch/depo tools"
+    },
+    {
+      "ticker": "UCTT",
+      "name": "Ultra Clean",
+      "segment": "wfe-subsystems",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "WFE sub-assemblies; low moat"
+    },
+    {
+      "ticker": "ICHR",
+      "name": "Ichor",
+      "segment": "wfe-fluid-delivery",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "gas/fluid delivery; build-to-print"
+    },
+    {
+      "ticker": "NVMI",
+      "name": "Nova (ADR/IL)",
+      "segment": "wfe-metrology",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "optical/X-ray metrology niche"
+    },
+    {
+      "ticker": "PLAB",
+      "name": "Photronics",
+      "segment": "photomasks",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "merchant photomask leader; quiet choke"
+    },
+    {
+      "ticker": "VECO",
+      "name": "Veeco",
+      "segment": "wfe-depo-litho",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "MOCVD + adv-packaging tools"
+    },
+    {
+      "ticker": "MKSI",
+      "name": "MKS Instruments",
+      "segment": "materials-subsystems",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "vacuum/lasers/photonics fab enabler"
+    },
+    {
+      "ticker": "ENTG",
+      "name": "Entegris",
+      "segment": "materials-filtration",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "ultra-pure materials/filters; consumable choke"
+    },
+    {
+      "ticker": "AXTI",
+      "name": "AXT Inc",
+      "segment": "substrates-inp",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "InP/GaAs substrates for optical; China angle"
+    },
+    {
+      "ticker": "WOLF",
+      "name": "Wolfspeed",
+      "segment": "sic-materials-power",
+      "cpu_relation": "peripheral",
+      "chokepoint": "medium",
+      "note": "SiC wafers+power; distressed"
+    },
+    {
+      "ticker": "CRUS",
+      "name": "Cirrus Logic",
+      "segment": "audio-mixed-signal",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "audio codecs; Apple-heavy"
+    },
+    {
+      "ticker": "IPGP",
+      "name": "IPG Photonics",
+      "segment": "fiber-lasers",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "industrial fiber lasers"
+    },
+    {
+      "ticker": "TSM",
+      "name": "TSMC (ADR/TW)",
+      "segment": "foundry-leading-edge",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "leading-edge logic + CoWoS; core AI choke"
+    },
+    {
+      "ticker": "GFS",
+      "name": "GlobalFoundries",
+      "segment": "foundry-mature",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "mature/specialty nodes"
+    },
+    {
+      "ticker": "UMC",
+      "name": "United Micro (ADR/TW)",
+      "segment": "foundry-mature",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "mature-node commodity capacity"
+    },
+    {
+      "ticker": "AMKR",
+      "name": "Amkor",
+      "segment": "osat-packaging",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "largest US OSAT; adv packaging"
+    },
+    {
+      "ticker": "TSEM",
+      "name": "Tower Semi (ADR/IL)",
+      "segment": "foundry-specialty",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "specialty analog/RF/SiGe/photonics foundry"
+    },
+    {
+      "ticker": "TXN",
+      "name": "Texas Instruments",
+      "segment": "analog-embedded",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "analog breadth; broad end-markets"
+    },
+    {
+      "ticker": "ADI",
+      "name": "Analog Devices",
+      "segment": "analog-mixed-signal",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "high-perf analog; industrial/auto"
+    },
+    {
+      "ticker": "MCHP",
+      "name": "Microchip",
+      "segment": "mcu-analog",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "MCU+analog; cyclical"
+    },
+    {
+      "ticker": "NXPI",
+      "name": "NXP (ADR/NL)",
+      "segment": "analog-auto-mcu",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "auto+industrial+edge"
+    },
+    {
+      "ticker": "ON",
+      "name": "ON Semiconductor",
+      "segment": "power-discrete-sensors",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "power+image sensors; EV/industrial"
+    },
+    {
+      "ticker": "MPWR",
+      "name": "Monolithic Power",
+      "segment": "power-management",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "high-density power for AI GPUs (NVDA content)"
+    },
+    {
+      "ticker": "POWI",
+      "name": "Power Integrations",
+      "segment": "power-conversion",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "AC-DC/HV power ICs; broad"
+    },
+    {
+      "ticker": "NVTS",
+      "name": "Navitas",
+      "segment": "gan-sic-power",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "GaN/SiC power; AI-PSU narrative; speculative"
+    },
+    {
+      "ticker": "VSH",
+      "name": "Vishay",
+      "segment": "discretes-passives",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "resistors/caps/diodes/MOSFETs; commodity"
+    },
+    {
+      "ticker": "DIOD",
+      "name": "Diodes Inc",
+      "segment": "discretes-analog",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "discrete+analog commodity"
+    },
+    {
+      "ticker": "SLAB",
+      "name": "Silicon Labs",
+      "segment": "mcu-wireless",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "IoT/edge wireless MCUs"
+    },
+    {
+      "ticker": "LSCC",
+      "name": "Lattice",
+      "segment": "fpga-low-power",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "small/mid FPGAs; some server content"
+    },
+    {
+      "ticker": "ALGM",
+      "name": "Allegro Micro",
+      "segment": "sensors-power",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "Hall sensors+power for auto/EV"
+    },
+    {
+      "ticker": "SITM",
+      "name": "SiTime",
+      "segment": "mems-timing",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "MEMS oscillators; AI/datacenter timing content"
+    },
+    {
+      "ticker": "AOSL",
+      "name": "Alpha & Omega",
+      "segment": "power-mosfet",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "power MOSFETs; commodity"
+    },
+    {
+      "ticker": "NVEC",
+      "name": "NVE Corp",
+      "segment": "spintronic-sensors",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "tiny spintronic niche"
+    },
+    {
+      "ticker": "QRVO",
+      "name": "Qorvo",
+      "segment": "rf-front-end",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "RF FEM; mobile/Apple"
+    },
+    {
+      "ticker": "SWKS",
+      "name": "Skyworks",
+      "segment": "rf-front-end",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "RF FEM; mobile/IoT/Apple"
+    },
+    {
+      "ticker": "COHR",
+      "name": "Coherent",
+      "segment": "optical-transceivers-lasers",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "integrated optics+InP lasers for 800G/1.6T"
+    },
+    {
+      "ticker": "LITE",
+      "name": "Lumentum",
+      "segment": "optical-lasers",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "datacom lasers; EML leader"
+    },
+    {
+      "ticker": "AAOI",
+      "name": "Applied Optoelectronics",
+      "segment": "optical-transceivers",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "transceivers; lumpy"
+    },
+    {
+      "ticker": "POET",
+      "name": "POET Technologies",
+      "segment": "photonic-integration",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "optical interposer for CPO; speculative"
+    },
+    {
+      "ticker": "CRDO",
+      "name": "Credo",
+      "segment": "connectivity-aec-serdes",
+      "cpu_relation": "enabling",
+      "chokepoint": "high",
+      "note": "AEC + SerDes/retimers; AI-rack interconnect"
+    },
+    {
+      "ticker": "ALAB",
+      "name": "Astera Labs",
+      "segment": "connectivity-retimers",
+      "cpu_relation": "direct",
+      "chokepoint": "high",
+      "note": "PCIe/CXL/Ethernet glue for GPUs; AI-rack choke"
+    },
+    {
+      "ticker": "LWLG",
+      "name": "Lightwave Logic",
+      "segment": "photonics-eo-polymer",
+      "cpu_relation": "enabling",
+      "chokepoint": "low",
+      "note": "EO polymer modulator IP; pre-revenue"
+    },
+    {
+      "ticker": "MTSI",
+      "name": "MACOM",
+      "segment": "rf-optical-analog",
+      "cpu_relation": "enabling",
+      "chokepoint": "medium",
+      "note": "analog/RF + optical drivers/TIAs"
+    },
+    {
+      "ticker": "CIEN",
+      "name": "Ciena",
+      "segment": "optical-systems",
+      "cpu_relation": "peripheral",
+      "chokepoint": "low",
+      "note": "optical networking systems (boxes), coherent DSP"
+    }
+  ]
+}
