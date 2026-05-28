@@ -96,6 +96,9 @@ def pull_fred(series_id):
     last = data[-1]
     prev = data[-2] if len(data) > 1 else None
     week_ago = data[-6] if len(data) > 6 else None   # daily series: ~1wk back
+    # observation closest to ~13 weeks (91d) ago — for net-liquidity momentum
+    target = date.fromisoformat(last[0]).toordinal() - 91
+    q_ago = min(data, key=lambda r: abs(date.fromisoformat(r[0]).toordinal() - target))
     return {
         "series": series_id,
         "date": last[0],
@@ -103,6 +106,8 @@ def pull_fred(series_id):
         "prev": num(prev) if prev else None,
         "prev_date": prev[0] if prev else None,
         "week_ago": num(week_ago) if week_ago else None,
+        "q_ago": num(q_ago),
+        "q_ago_date": q_ago[0],
     }
 
 
@@ -211,6 +216,22 @@ def score(d):
     walcl_bn = ((fred.get("WALCL") or {}).get("value") or 0) / 1000.0
     srf_bn = (srf or {}).get("accepted_bn") or 0.0
 
+    # Net liquidity = WALCL − TGA − RRP, and its 13-week momentum.
+    # Backtest (2024-26) found the 13wk CHANGE is the single forward-looking factor
+    # (corr to fwd-3m: +0.26 SPX / +0.33 NDX); the LEVEL is a spurious −0.71 trap.
+    walcl_q = ((fred.get("WALCL") or {}).get("q_ago") or 0) / 1000.0
+    tga_q   = ((fred.get("TGA") or {}).get("q_ago") or 0) / 1000.0
+    rrp_q   = (fred.get("RRP") or {}).get("q_ago")
+    netliq_now = walcl_bn - tga_bn - (rrp_bn or 0)
+    netliq_q   = walcl_q - tga_q - (rrp_q or 0)
+    netliq_mom = round(netliq_now - netliq_q, 0) if (walcl_q and walcl_bn) else None
+    if netliq_mom is None:    mom_pts, mom_tight = 0, None
+    elif netliq_mom > 300:    mom_pts, mom_tight = 12, 0    # strong loosening tailwind
+    elif netliq_mom > 100:    mom_pts, mom_tight = 6, 0
+    elif netliq_mom >= -100:  mom_pts, mom_tight = 0, 1     # flat
+    elif netliq_mom >= -300:  mom_pts, mom_tight = -6, 2
+    else:                     mom_pts, mom_tight = -12, 3   # strong draining headwind
+
     # Layer 1 — SOFR-IORB spread (bp), the headline gauge -------------------
     spread = round((sofr_rate - iorb) * 100, 1) if (sofr_rate and iorb) else None
     L["sofr_iorb_spread_bp"] = {
@@ -277,6 +298,16 @@ def score(d):
     elif srf_bn >= 1:
         notes.append(f"SRF takeup ${srf_bn:.1f}B (above routine, watch)")
 
+    # Layer 7 — Net-liquidity 13-week momentum (the forward-looking factor) -
+    L["netliq_13w_mom_bn"] = {
+        "value": netliq_mom, "score": mom_tight,
+        "read": "rising net liquidity = loosening tailwind; best fwd-3m signal (backtest)",
+    }
+    if netliq_mom is not None and netliq_mom <= -300:
+        triggers.append(f"Net liquidity draining {netliq_mom:+.0f}B/13wk — 3m headwind for risk assets")
+    elif netliq_mom is not None and netliq_mom >= 300:
+        notes.append(f"Net liquidity rising {netliq_mom:+.0f}B/13wk — 3m tailwind")
+
     # ── Liquidity Score 0-100 (higher = more abundant / looser) ─────────────
     # Transparent, additive from a neutral 50. SOFR-IORB is the spine.
     # NOTE: an empty RRP is NOT scored as "tight" here — that cash already moved
@@ -298,6 +329,7 @@ def score(d):
         pts += p; detail["tga_flow"] = p
     if tail is not None:                          # SOFR tail paying up = stress
         p = (0 if tail < 10 else -3 if tail < 25 else -8); pts += p; detail["sofr_tail"] = p
+    pts += mom_pts; detail["netliq_mom"] = mom_pts   # the forward-looking factor
     liquidity_score = int(round(clamp(pts, 0, 100)))
 
     # Regime band from the 0-100 score; SRF stress overrides downward.
@@ -309,7 +341,7 @@ def score(d):
     if srf_bn >= 10 or (spread is not None and spread > 5 and (rrp_bn or 0) < 10):
         regime = "🔴 STRESS"
 
-    net_liq = round(walcl_bn - tga_bn - (rrp_bn or 0), 0) if walcl_bn else None
+    net_liq = round(netliq_now, 0) if walcl_bn else None
     return {
         "regime": regime, "liquidity_score": liquidity_score, "score_detail": detail,
         "layers": L, "triggers": triggers, "notes": notes,
@@ -322,6 +354,7 @@ def score(d):
             "tga_bn": round(tga_bn, 0) if tga_bn else None,
             "srf_bn": round(srf_bn, 2),
             "net_liquidity_bn": net_liq,
+            "netliq_13w_chg_bn": netliq_mom,
         },
     }
 
@@ -329,6 +362,15 @@ def score(d):
 # ─────────────────────────────────────────────────────────────────────────────
 # Formatting + state + Telegram
 # ─────────────────────────────────────────────────────────────────────────────
+def _sgn(x):
+    return "n/a" if x is None else f"{x:+.0f}B"
+
+
+def _mom_label(x):
+    if x is None: return "n/a"
+    return "tailwind" if x > 100 else "headwind" if x < -100 else "flat"
+
+
 def fmt_human(out):
     s = out["scoring"]; h = s["headline_metrics"]; cal = out["calendar"]
     lines = [
@@ -338,7 +380,8 @@ def fmt_human(out):
         "",
         f"SOFR {h['sofr']}  |  IORB {h['iorb']}  |  spread {h['spread_bp']}bp  |  EFFR {h['effr']}",
         f"ON RRP ${h['rrp_bn']}B (buffer)  |  Reserves ${h['reserves_t']}T  |  TGA ${h['tga_bn']}B",
-        f"SRF takeup ${h['srf_bn']}B  |  Net liquidity ${h['net_liquidity_bn']}B",
+        f"SRF ${h['srf_bn']}B  |  Net liquidity ${h['net_liquidity_bn']}B",
+        f"Net-liq 13wk momentum: {_sgn(h['netliq_13w_chg_bn'])}  → fwd-3m {_mom_label(h['netliq_13w_chg_bn'])}  (the forward factor)",
         "",
         "Layers (higher = tighter):",
     ]
@@ -365,6 +408,7 @@ def fmt_telegram(out, changed_from=None):
         f"SOFR `{h['sofr']}` vs IORB `{h['iorb']}` = *{h['spread_bp']}bp*",
         f"ON RRP `${h['rrp_bn']}B`  Reserves `${h['reserves_t']}T`  TGA `${h['tga_bn']}B`",
         f"SRF `${h['srf_bn']}B`  NetLiq `${h['net_liquidity_bn']}B`",
+        f"Net-liq 13wk mom: *{_sgn(h['netliq_13w_chg_bn'])}* → fwd-3m {_mom_label(h['netliq_13w_chg_bn'])}",
     ]
     if s["triggers"]:
         parts += [""] + [f"⚠️ {t}" for t in s["triggers"][:4]]

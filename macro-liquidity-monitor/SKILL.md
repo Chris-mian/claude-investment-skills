@@ -72,10 +72,18 @@ Additive from a neutral **50**. SOFR−IORB is the spine; the rest nudge it:
 | **Reserves vs LCLoR** | >$3.4T: +8 · $3.1–3.4T: +4 · $2.9–3.1T: 0 · <$2.9T: −10 |
 | **TGA weekly flow** | draining: +5 · flat: 0 · building $25–150B: −5 · >$150B: −10 |
 | **SOFR p99 − IORB** (tail) | <10bp: 0 · 10–25: −3 · >25: −8 |
+| **Net-liq 13wk momentum** ⭐ | >+$300B: +12 · +$100–300B: +6 · ±$100B: 0 · −$100–300B: −6 · <−$300B: −12 |
 
 Bands → **🟢 ABUNDANT** (≥80) · **🟡 AMPLE** (60–79) · **⚪ BALANCED** (45–59)
 · **🟠 TIGHTENING** (25–44) · **🔴 STRESS** (<25). **Override:** SRF ≥ $10B, or
 SOFR > IORB+5bp with RRP < $10B, forces 🔴.
+
+> ⭐ **The forward-looking factor.** A 2yr backtest (`scripts/backtest_liquidity.py`)
+> showed every *level* gauge here is coincident (≈0 correlation to next-week returns),
+> but the **13-week CHANGE in net liquidity** (WALCL−TGA−RRP) leads forward-3m returns
+> (corr **+0.26 SPX / +0.33 NDX**). The net-liquidity *level* is a spurious −0.71 trap.
+> So this row is the one that tilts the score toward what's *coming*; the rest describe
+> what *is*. Regime-bucketed fwd-3m: 🟢/🟡 ≈ +4–6%, 🔴 ≈ NDX −1% (value is downside avoidance).
 
 > **Why an empty ON RRP does NOT drag the score down:** that cash already flowed into
 > the system (loose), so it isn't *current* tightness. An empty buffer is a forward
