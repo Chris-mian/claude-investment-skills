@@ -1,0 +1,63 @@
+name: Macro Liquidity Monitor (USD Plumbing)
+
+# Twice-daily USD funding/repo-plumbing radar. Pulls SOFR/EFFR/ON RRP/SRF (NY Fed) +
+# IORB/reserves/TGA/WALCL (FRED), scores a 0-100 liquidity regime, and pushes a
+# Telegram digest. A 🔔 REGIME CHANGED banner is prepended when the band flips.
+#
+# Cadence (weekdays, twice daily):
+#   08:30 ET — morning preview (prior-day SOFR/EFFR + overnight FRED)
+#   16:30 ET — post-close confirm (same-day ON RRP + SRF operations)
+# Pure macro, public data only (no API key). Reuses TELEGRAM_* secrets.
+
+on:
+  schedule:
+    - cron: '30 12 * * 1-5'   # 08:30 ET (12:30 UTC) — morning preview
+    - cron: '30 20 * * 1-5'   # 16:30 ET (20:30 UTC) — post-close confirm
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Print to log, do NOT send Telegram'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write   # to commit state.json back
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet 'requests>=2.31'
+
+      - name: Run liquidity monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TEST_MODE:          ${{ inputs.test_mode == 'true' && '1' || '' }}
+        run: |
+          # Twice-daily digest → always send (--force). The script prepends a
+          # 🔔 REGIME CHANGED banner when the band flips vs committed state.json.
+          python macro-liquidity-monitor/scripts/liquidity_pull.py --telegram --force
+
+      - name: Commit updated state (if changed)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain macro-liquidity-monitor/scripts/state.json)" ]]; then
+            git add macro-liquidity-monitor/scripts/state.json
+            git commit -m "liquidity: regime checkpoint ($(date -u +%Y-%m-%dT%H:%MZ))"
+            git pull --rebase && git push
+          else
+            echo "No state changes to commit."
+          fi
