@@ -56,6 +56,14 @@ BROWSER_HEADERS = {
 }
 
 
+
+# ── Centralized Telegram fan-out (DM + Channel) ───────────────────────
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__)))))
+import _tg
+# ──────────────────────────────────────────────────────────────────────
+
 def http_get(url, browser=True, timeout=25):
     """browser=True adds a Chrome UA; FRED rejects that, so call it browser=False."""
     headers = dict(BROWSER_HEADERS) if browser else {}
@@ -418,24 +426,14 @@ def fmt_telegram(out, changed_from=None):
     return "\n".join(parts)
 
 
-def send_telegram(msg):
-    if TEST_MODE:
-        print("─── TEST_MODE: would send ───\n" + msg + "\n─── end ───", file=sys.stderr)
-        return True
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
-        print(f"[WARN] No Telegram creds; message NOT sent:\n{msg}", file=sys.stderr)
-        return False
-    r = requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                      json={"chat_id": chat_id, "text": msg, "parse_mode": "Markdown",
-                            "disable_web_page_preview": True}, timeout=30)
-    if not r.ok:
-        print(f"[ERROR] Telegram {r.status_code}: {r.text[:200]}", file=sys.stderr)
-        # retry as plain text (lone _/* break Markdown)
-        r = requests.post(f"https://api.telegram.org/bot{token}/sendMessage",
-                          json={"chat_id": chat_id, "text": msg, "disable_web_page_preview": True}, timeout=30)
-    return r.ok
+def send_telegram(msg, *args, **kwargs) -> bool:
+    """Delegates to _tg.send so every alert fans out to BOTH the
+    @DuckyduckyTradeBot DM (TELEGRAM_CHAT_ID) and the duckyduckyChannel
+    (TELEGRAM_CHAT_ID_CHANNEL).  Same bot, two routes."""
+    tm = globals().get("TEST_MODE", False)
+    if isinstance(tm, str):
+        tm = tm == "1"
+    return _tg.send(msg, test_mode=bool(tm))
 
 
 def load_state():

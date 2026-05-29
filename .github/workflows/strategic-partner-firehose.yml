@@ -64,6 +64,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
           STRATEGIC_MIN_MCAP: ${{ inputs.min_mcap || '50000000' }}
           STRATEGIC_MIN_AMOUNT_M: ${{ inputs.min_amount_m || '50' }}
           TEST_MODE: ${{ inputs.test_mode == 'true' && '1' || '' }}

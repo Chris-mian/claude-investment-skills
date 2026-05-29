@@ -67,6 +67,14 @@ DIGEST = os.environ.get("DIGEST", "") == "1"
 
 # ─── State ──────────────────────────────────────────────────────────────
 
+
+# ── Centralized Telegram fan-out (DM + Channel) ───────────────────────
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__)))))
+import _tg
+# ──────────────────────────────────────────────────────────────────────
+
 def load_state() -> dict:
     if STATE_FILE.exists():
         try:
@@ -135,31 +143,14 @@ def pct(new: float, old: float) -> float | None:
 
 # ─── Telegram ───────────────────────────────────────────────────────────
 
-def send_telegram(msg: str) -> bool:
-    if TEST_MODE:
-        print("─── TEST_MODE: would send ───\n" + msg + "\n─── end ───",
-              file=sys.stderr)
-        return True
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
-        print(f"[WARN] no Telegram creds; not sent:\n{msg}", file=sys.stderr)
-        return False
-    import requests
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    r = requests.post(url, json={
-        "chat_id": chat_id, "text": msg,
-        "parse_mode": "Markdown", "disable_web_page_preview": True,
-    }, timeout=20)
-    if r.status_code == 200:
-        return True
-    # Markdown parse failure → retry plain text so the alert always lands.
-    print(f"[WARN] Telegram Markdown {r.status_code}: {r.text[:150]} — retry plain",
-          file=sys.stderr)
-    r2 = requests.post(url, json={
-        "chat_id": chat_id, "text": msg, "disable_web_page_preview": True,
-    }, timeout=20)
-    return r2.status_code == 200
+def send_telegram(msg, *args, **kwargs) -> bool:
+    """Delegates to _tg.send so every alert fans out to BOTH the
+    @DuckyduckyTradeBot DM (TELEGRAM_CHAT_ID) and the duckyduckyChannel
+    (TELEGRAM_CHAT_ID_CHANNEL).  Same bot, two routes."""
+    tm = globals().get("TEST_MODE", False)
+    if isinstance(tm, str):
+        tm = tm == "1"
+    return _tg.send(msg, test_mode=bool(tm))
 
 
 def fmt_usd(v: float) -> str:

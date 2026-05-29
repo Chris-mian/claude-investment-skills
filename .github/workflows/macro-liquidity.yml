@@ -44,6 +44,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
           TEST_MODE:          ${{ inputs.test_mode == 'true' && '1' || '' }}
         run: |
           # Twice-daily digest → always send (--force). The script prepends a

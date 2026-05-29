@@ -43,6 +43,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
           TEST_MODE: ${{ inputs.test_mode == 'true' && '1' || '' }}
           PR_WIRE_USER_AGENT: "ssurmiczizhao@gmail.com pr-wire-firehose/1.0 (ci)"
         run: python pr-wire-firehose/scripts/pr_wire.py

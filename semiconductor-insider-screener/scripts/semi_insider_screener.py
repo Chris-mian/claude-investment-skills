@@ -54,6 +54,14 @@ MAX_RUN_PCT = float(os.environ.get("MAX_RUN_PCT", "80"))    # only alert if run<
 TEST_MODE = os.environ.get("TEST_MODE", "") == "1"
 
 
+
+# ── Centralized Telegram fan-out (DM + Channel) ───────────────────────
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__)))))
+import _tg
+# ──────────────────────────────────────────────────────────────────────
+
 def load_universe() -> dict:
     d = json.load(open(UNIVERSE_FILE))
     rows = d.get("tickers", d) if isinstance(d, dict) else d
@@ -126,25 +134,14 @@ def price_now_and_3mo(ticker: str):
         return None
 
 
-def send_telegram(msg: str) -> bool:
-    if TEST_MODE:
-        print("─── TEST_MODE: would send ───\n" + msg + "\n─── end ───", file=sys.stderr)
-        return True
-    import requests
-    token = os.environ.get("TELEGRAM_BOT_TOKEN"); chat = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat:
-        print(f"[WARN] no creds:\n{msg}", file=sys.stderr); return False
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    r = requests.post(url, json={"chat_id": chat, "text": msg, "parse_mode": "Markdown",
-                      "disable_web_page_preview": True}, timeout=20)
-    if r.status_code == 200:
-        return True
-    r2 = requests.post(url, json={"chat_id": chat, "text": msg,
-                       "disable_web_page_preview": True}, timeout=20)
-    return r2.status_code == 200
-
-
-_CHOKE = {"extreme": "🔴 extreme", "high": "🟠 high", "medium": "🟡 medium", "low": "⚪ low"}
+def send_telegram(msg, *args, **kwargs) -> bool:
+    """Delegates to _tg.send so every alert fans out to BOTH the
+    @DuckyduckyTradeBot DM (TELEGRAM_CHAT_ID) and the duckyduckyChannel
+    (TELEGRAM_CHAT_ID_CHANNEL).  Same bot, two routes."""
+    tm = globals().get("TEST_MODE", False)
+    if isinstance(tm, str):
+        tm = tm == "1"
+    return _tg.send(msg, test_mode=bool(tm))
 
 
 def fmt(b: dict, u: dict, cur: float, run_since: float, below) -> str:

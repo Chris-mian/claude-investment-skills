@@ -84,6 +84,14 @@ _SELL_RX = re.compile(r"\bdisposal\b|\bdisposed\b|\bsold\b|\bsale of\b", re.I)
 _CIK_MAP: dict[str, str] = {}
 
 
+
+# ── Centralized Telegram fan-out (DM + Channel) ───────────────────────
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__)))))
+import _tg
+# ──────────────────────────────────────────────────────────────────────
+
 def resolve_cik(ticker: str) -> str:
     if not _CIK_MAP:
         try:
@@ -199,21 +207,14 @@ def classify(body: str) -> dict | None:
     }
 
 
-def send_telegram(msg: str) -> bool:
-    if TEST_MODE:
-        print("─── TEST_MODE: would send ───\n" + msg + "\n─── end ───", file=sys.stderr)
-        return True
-    token = os.environ.get("TELEGRAM_BOT_TOKEN"); chat = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat:
-        print(f"[WARN] no creds; not sent:\n{msg}", file=sys.stderr); return False
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
-    r = requests.post(url, json={"chat_id": chat, "text": msg,
-                      "parse_mode": "Markdown", "disable_web_page_preview": True}, timeout=20)
-    if r.status_code == 200:
-        return True
-    r2 = requests.post(url, json={"chat_id": chat, "text": msg,
-                       "disable_web_page_preview": True}, timeout=20)
-    return r2.status_code == 200
+def send_telegram(msg, *args, **kwargs) -> bool:
+    """Delegates to _tg.send so every alert fans out to BOTH the
+    @DuckyduckyTradeBot DM (TELEGRAM_CHAT_ID) and the duckyduckyChannel
+    (TELEGRAM_CHAT_ID_CHANNEL).  Same bot, two routes."""
+    tm = globals().get("TEST_MODE", False)
+    if isinstance(tm, str):
+        tm = tm == "1"
+    return _tg.send(msg, test_mode=bool(tm))
 
 
 def fmt(ticker: str, name: str, f: dict, link: str, date: str) -> str:

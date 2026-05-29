@@ -51,6 +51,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
           # Monday 14:00 UTC tick forces a digest; the daily tick does not.
           DIGEST:    ${{ (github.event.schedule == '0 14 * * 1' || inputs.digest == '1') && '1' || '' }}
           TEST_MODE: ${{ inputs.test_mode == 'true' && '1' || '' }}

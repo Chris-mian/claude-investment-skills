@@ -66,6 +66,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
           PRIORITY_MAX:       ${{ inputs.priority_max || '2' }}
           DAYS_BACK:          ${{ inputs.days_back || '3' }}
           FORCE_RESCAN:       ${{ inputs.force_rescan == 'true' && '1' || '' }}

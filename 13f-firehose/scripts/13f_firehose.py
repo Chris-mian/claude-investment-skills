@@ -49,6 +49,14 @@ PRIORITY_MAX = int(os.environ.get("PRIORITY_MAX", "3"))
 
 
 # ─── State ─────────────────────────────────────────────────────────────────
+
+# ── Centralized Telegram fan-out (DM + Channel) ───────────────────────
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__)))))
+import _tg
+# ──────────────────────────────────────────────────────────────────────
+
 def load_state() -> dict:
     if STATE_FILE.exists():
         try:
@@ -64,39 +72,16 @@ def save_state(state: dict) -> None:
 
 
 # ─── Telegram ──────────────────────────────────────────────────────────────
-def send_telegram(msg: str) -> bool:
-    if TEST_MODE:
-        print("─── TEST_MODE: would send ───", file=sys.stderr)
-        print(msg, file=sys.stderr)
-        print("─── end ───", file=sys.stderr)
-        return True
-
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not token or not chat_id:
-        print(f"[WARN] No Telegram creds, message NOT sent:\n{msg[:500]}", file=sys.stderr)
-        return False
-    try:
-        r = requests.post(
-            f"https://api.telegram.org/bot{token}/sendMessage",
-            json={
-                "chat_id": chat_id,
-                "text": msg,
-                "parse_mode": "Markdown",
-                "disable_web_page_preview": True,
-            },
-            timeout=30,
-        )
-        if r.ok:
-            return True
-        print(f"[ERROR] Telegram {r.status_code}: {r.text[:200]}", file=sys.stderr)
-        return False
-    except Exception as e:
-        print(f"[ERROR] Telegram exception: {e}", file=sys.stderr)
-        return False
+def send_telegram(msg, *args, **kwargs) -> bool:
+    """Delegates to _tg.send so every alert fans out to BOTH the
+    @DuckyduckyTradeBot DM (TELEGRAM_CHAT_ID) and the duckyduckyChannel
+    (TELEGRAM_CHAT_ID_CHANNEL).  Same bot, two routes."""
+    tm = globals().get("TEST_MODE", False)
+    if isinstance(tm, str):
+        tm = tm == "1"
+    return _tg.send(msg, test_mode=bool(tm))
 
 
-# ─── Per-fund processing ──────────────────────────────────────────────────
 def process_fund(fund: Fund, state: dict) -> bool:
     """Process one fund. Returns True if an alert was sent."""
     seen_map = state.setdefault("seen", {})

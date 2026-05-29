@@ -54,6 +54,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID_CHANNEL: ${{ secrets.TELEGRAM_CHAT_ID_CHANNEL }}
           INCLUDE_SELLS: ${{ inputs.include_sells == '1' && '1' || '' }}
           MIN_BUY_USD:   ${{ inputs.min_buy_usd || '25000' }}
           TEST_MODE:     ${{ inputs.test_mode == 'true' && '1' || '' }}
