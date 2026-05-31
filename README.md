@@ -6,6 +6,29 @@
 
 ---
 
+## 🚀 A friend sent you this repo? Let your agent install it for you.
+
+You don't have to read 1200 lines of README. The repo ships with [`AGENTS.md`](./AGENTS.md) — a complete setup playbook your AI coding agent reads and executes. **Open Claude Code** (or any agent that respects `AGENTS.md` / `CLAUDE.md` — Codex, Cursor, custom CLI agents) and paste:
+
+```
+Read https://github.com/ssurmic/claude-investment-skills/blob/main/AGENTS.md
+and walk me through setting up this repo end-to-end. Ask me anything you
+need (which OS, do I want price alerts / firehoses / just the analysis
+skills, do I have a Telegram bot yet, etc.) and install the pieces I want.
+```
+
+The agent will:
+1. Ask the **PREP questionnaire** (OS, what you want — analysis only? alerts? firehoses? webhook for instant chat?)
+2. Pick a **flow** (A: core skills · B: GH-cron alerts · C: chat via polling · D: webhook for 1-3 sec replies)
+3. Walk you through forking the repo, creating a Telegram bot via `@BotFather`, setting GitHub Secrets, and enabling workflows — **step by step, button by button**
+4. Verify each step before moving on, and warn you about the 6 known gotchas (PAT scope, webhook SSL, btoa Latin-1, etc.)
+
+No prior Claude Code / Python / GitHub Actions experience required — the agent handles it. Estimated time: 5 min (analysis only) → 30 min (full firehose + webhook stack).
+
+> **Prefer to do it yourself?** Skip to [Install](#install) below for the manual path.
+
+---
+
 ## What's included
 
 ### Analysis skills — powered by Claude

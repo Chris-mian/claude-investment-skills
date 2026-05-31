@@ -6,6 +6,29 @@
 
 ---
 
+## 🚀 朋友把这个 repo 转给你了？让 agent 帮你装好就完事
+
+不用读 1200 行 README。仓库里有 [`AGENTS.md`](./AGENTS.md) — 一份完整的 setup playbook，你的 AI 编码 agent 会读它然后执行。**打开 Claude Code**（或任何认 `AGENTS.md` / `CLAUDE.md` 的 agent — Codex、Cursor、自定义 CLI agent 都行），把下面这段贴进去：
+
+```
+读 https://github.com/ssurmic/claude-investment-skills/blob/main/AGENTS.md
+然后引导我端到端把这个 repo 装好。该问的都问我（操作系统、我只要分析
+skills 还是连 Price Alert / Firehose / 1-3 秒回的 webhook 一起要、有没
+有 Telegram bot 等等），把我想要的部分都装上。
+```
+
+Agent 会:
+1. 走 **PREP 问卷** — 你的 OS、想装哪几块（只分析？要 alerts？要 firehose？要 webhook 实时聊天？）
+2. 选 **Flow** — A: 核心 skills · B: GH cron alerts · C: polling 聊天 · D: webhook（1-3 秒回复）
+3. 一步步带你 fork repo、用 `@BotFather` 创 Telegram bot、设 GitHub Secrets、enable workflow — **screen-by-screen，每一步都验证**
+4. 提前提醒 6 个已知 gotcha（PAT scope、webhook SSL、btoa Latin-1 之类的坑）
+
+不需要懂 Claude Code / Python / GitHub Actions — agent 全帮你处理。预计耗时:只装分析 skills 5 分钟，完整 firehose + webhook 全套约 30 分钟。
+
+> **想自己手动装?** 直接看下面 [Install](#install) 章节。
+
+---
+
 ## 里面有什么
 
 ### 分析技能 — 由 Claude 驱动
