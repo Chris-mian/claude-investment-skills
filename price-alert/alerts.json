@@ -10,7 +10,10 @@
       "note": "setup smoke test",
       "created": "2026-05-31",
       "active": true,
-      "fired": false
+      "fired": true,
+      "fired_at_utc": "2026-05-31T08:24:08.762499+00:00",
+      "fired_at_price": 756.47998046875,
+      "fired_reason": "$756.48 \u2264 $999999.00"
     }
   ]
 }
