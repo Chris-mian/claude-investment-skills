@@ -93,16 +93,28 @@ These run as GitHub Actions cron jobs and push Telegram alerts. **The only cost 
 **Option 1 — Git clone** (3 min, recommended — gives you a fork to customize):
 
 ```bash
+# 1. Clone the repo into Claude Code's skills dir. This brings down everything
+#    in the repo — all 13 skills, all Python scripts, AND setup.sh.
 git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
+
+# 2. Run the bundled setup.sh (it lives at the repo root, so step 1 put it
+#    here). It creates a Python venv at /tmp/.insider_venv and installs
+#    yfinance + pandas + requests.
 bash ~/.claude/skills/setup.sh
 ```
 
 **Option 2 — Plugin marketplace** (30 sec, easiest way to get started):
 
 ```bash
+# 1. /plugin install copies the same repo contents (including setup.sh) into
+#    Claude Code's plugin dir.
 /plugin install claude-investment-skills@claude-investment-skills-marketplace
+
+# 2. Same setup.sh, different path — it lives wherever the plugin landed.
 bash ~/.claude/plugins/claude-investment-skills/setup.sh
 ```
+
+> `setup.sh` is **committed to the repo root** — you don't download it separately. Step 1 of either option pulls it down along with everything else, then step 2 just executes the file that's now on your disk. `setup.sh` itself auto-detects which of the two install modes you're in.
 
 Both methods install the same 13 skills, same Python scripts, and the same alert pipeline. You can switch between them at any time — your `alerts.json` lives in your GitHub fork either way.
 

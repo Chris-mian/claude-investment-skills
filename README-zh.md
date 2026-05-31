@@ -93,16 +93,28 @@ NOK 这周的 gamma wall 在哪里？
 **方式一 — Git clone**（3 分钟，推荐，可以 fork 自定义）：
 
 ```bash
+# 1. 把整个 repo clone 到 Claude Code 的 skills 目录下。
+#    这一步把所有内容(13 个 skills、所有 Python 脚本、以及 setup.sh)
+#    全部下到本地。
 git clone https://github.com/ssurmic/claude-investment-skills.git ~/.claude/skills
+
+# 2. 运行 repo 自带的 setup.sh(它在 repo 根目录,第 1 步已经下来了)。
+#    它会在 /tmp/.insider_venv 建一个 Python venv,装 yfinance + pandas + requests。
 bash ~/.claude/skills/setup.sh
 ```
 
 **方式二 — Plugin marketplace**（30 秒，最快上手）：
 
 ```bash
+# 1. /plugin install 把同样的 repo 内容(包括 setup.sh)拷到 Claude Code
+#    的 plugin 目录下。
 /plugin install claude-investment-skills@claude-investment-skills-marketplace
+
+# 2. 同一个 setup.sh,只是路径不同 —— 它在 plugin 装到的那个目录里。
 bash ~/.claude/plugins/claude-investment-skills/setup.sh
 ```
+
+> `setup.sh` 是 **commit 在 repo 根目录** 的 —— 你不需要单独下它。两种方式的第 1 步都会把它跟其他东西一起拉到本地，第 2 步只是执行已经在磁盘上的那个文件。`setup.sh` 自己会判断你是 git-clone 模式还是 plugin 模式。
 
 两种方式装出来完全一样：同一套 13 个技能、同一批 Python 脚本、同一套 alert pipeline。可以随时切换，`alerts.json` 始终存在你的 GitHub fork 里。
 
