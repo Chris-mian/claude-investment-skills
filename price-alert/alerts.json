@@ -1,0 +1,16 @@
+{
+  "alerts": [
+    {
+      "id": "test-1",
+      "ticker": "SPY",
+      "condition": {
+        "op": "below",
+        "threshold": 999999
+      },
+      "note": "setup smoke test",
+      "created": "2026-05-31",
+      "active": true,
+      "fired": false
+    }
+  ]
+}
