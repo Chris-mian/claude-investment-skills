@@ -26,6 +26,9 @@
       "2026-05-07|SNDK|Purchase|$1,001 - $15,000",
       "2026-05-15|TPH|Sale|$1,001 - $15,000",
       "2026-05-04|TWLO|Purchase|$1,001 - $15,000"
+    ],
+    "Nancy Pelosi": [
+      "None|None|None|None"
     ]
   },
   "oge_seen": [
@@ -232,5 +235,5 @@
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/FED6F4F51D33882F85258C8A002C760E/$FILE/Sean-Duffy-04.23.2025-278T.pdf",
     "https://extapps2.oge.gov/201/Presiden.nsf/PAS+Index/FF08033E100E1A0885258C68002C8112/$FILE/McMaster, Sean  AMENDED final278.pdf"
   ],
-  "last_run_iso": "2026-06-23T22:08:46.103037+00:00"
+  "last_run_iso": "2026-06-24T15:36:17.683440+00:00"
 }
